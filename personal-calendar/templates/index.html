@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Personal Calendar</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <h1>Добро пожаловать в Personal Calendar!</h1>
+    <button hx-get="/events" hx-target="#events" hx-swap="innerHTML">Показать события</button>
+    <div id="events"></div>
+</body>
+</html> 
