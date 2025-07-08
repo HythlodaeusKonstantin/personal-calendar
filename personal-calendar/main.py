@@ -5,7 +5,7 @@ import psycopg2
 import os
 from psycopg2 import sql
 import uuid
-from datetime import date
+from datetime import date, timedelta, datetime
 
 app = FastAPI()
 
@@ -234,10 +234,11 @@ function setActiveSubTab(tab) {{
 
 @app.get("/section/habits", response_class=HTMLResponse)
 async def section_habits():
-    # При нажатии на корневую вкладку всегда показываем "Отметки"
+    # При нажатии на корневую вкладку всегда показываем актуальный раздел "Отметки"
+    content = (await habits_marks()).body.decode()
     html = HABITS_SECTION_TEMPLATE.format(
         active_marks="active", active_categories="", active_habits="",
-        content="<div>Отметки</div>"
+        content=content
     )
     return HTMLResponse(html)
 
@@ -268,15 +269,18 @@ async def habits_marks():
     rows = ""
     for entry_id, habit_name, completed in cur.fetchall():
         checked = "checked" if completed else ""
-        rows += f'''<tr><td>{habit_name}</td><td><input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="this" hx-swap="outerHTML" {checked}></td></tr>'''
+        row_style = ' style="background: #d4edda;"' if completed else ''
+        rows += f'''<tr{row_style}><td>{habit_name}</td><td><input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="#habits-marks-table-area" hx-swap="outerHTML" {checked}></td></tr>'''
     cur.close()
     conn.close()
     html = f'''
-    <h2>Отметки за {today.strftime('%d.%m.%Y')}</h2>
-    <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-        <tr><th>Привычка</th><th>Выполнено</th></tr>
-        {rows}
-    </table>
+    <div id="habits-marks-table-area">
+        <h2>Отметки за {today.strftime('%d.%m.%Y')}</h2>
+        <table id="habits-marks-table" border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+            <tr><th>Привычка</th><th>Выполнено</th></tr>
+            {rows}
+        </table>
+    </div>
     '''
     return HTMLResponse(html)
 
@@ -293,14 +297,11 @@ async def toggle_habit_entry(entry_id: str):
         return HTMLResponse("")
     new_value = not row[0]
     cur.execute("UPDATE habit_entry SET completed = %s WHERE id = %s;", (new_value, entry_id))
-    # Получаем имя привычки
-    cur.execute("SELECT h.name FROM habit_entry e JOIN habit h ON e.habit_id = h.id WHERE e.id = %s;", (entry_id,))
-    habit_name = cur.fetchone()[0]
     conn.commit()
     cur.close()
     conn.close()
-    checked = "checked" if new_value else ""
-    return HTMLResponse(f'<input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="this" hx-swap="outerHTML" {checked}>')
+    # Возвращаем всю таблицу
+    return await habits_marks()
 
 @app.get("/section/habits/categories", response_class=HTMLResponse)
 async def habits_categories():
@@ -498,9 +499,398 @@ async def delete_habit_category(cat_id: str):
     conn.close()
     return render_habit_category_list()
 
+# --- Раздел Задачи ---
+TASKS_SECTION_TEMPLATE = '''
+<div>
+    <div class="tabs" style="margin-bottom: 0;">
+        <button class="tab {active_marks}" id="tab-task-marks" hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
+        <button class="tab {active_categories}" id="tab-task-categories" hx-get="/section/tasks/categories" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
+        <button class="tab {active_tasks}" id="tab-task-tasks" hx-get="/section/tasks/tasks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки задач</button>
+    </div>
+    <div id="tasks-subsection" class="tab-content" style="margin-top:0;">{content}</div>
+</div>
+<script>
+function setActiveSubTab(tab) {{
+    document.querySelectorAll('.tabs .tab').forEach(btn => btn.classList.remove('active'));
+    tab.classList.add('active');
+}}
+</script>
+'''
+
 @app.get("/section/tasks", response_class=HTMLResponse)
 async def section_tasks():
-    return HTMLResponse("<div>Задачи</div>")
+    content = (await tasks_marks()).body.decode()
+    html = TASKS_SECTION_TEMPLATE.format(
+        active_marks="active", active_categories="", active_tasks="",
+        content=content
+    )
+    return HTMLResponse(html)
+
+# --- Категории задач ---
+TASK_CATEGORY_LIST_TEMPLATE = '''
+<div id="task-category-list">
+<h2>Категории задач</h2>
+<form hx-post="/section/tasks/categories/add" hx-target="#task-category-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
+    <input type="text" name="name" placeholder="Название категории" required>
+    <button type="submit">Добавить</button>
+</form>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr><th>Название</th><th>Действия</th></tr>
+    {rows}
+</table>
+</div>
+'''
+
+TASK_CATEGORY_ROW_TEMPLATE = '''
+<tr id="edit-task-category-row-{id}">
+    <td>{name}</td>
+    <td>
+        <button hx-get="/section/tasks/categories/edit/{id}" hx-target="#edit-task-category-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button hx-delete="/section/tasks/categories/delete/{id}" hx-target="#task-category-list" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
+'''
+
+TASK_CATEGORY_EDIT_TEMPLATE = '''
+<tr id="edit-task-category-row-{id}">
+    <td colspan="2">
+        <form hx-post="/section/tasks/categories/edit/{id}" hx-target="#task-category-list" hx-swap="outerHTML">
+            <input type="text" name="name" value="{name}" required>
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="window.location.reload()">Отмена</button>
+        </form>
+    </td>
+</tr>
+'''
+
+def render_task_category_list():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM task_category ORDER BY name;")
+    rows = "".join(
+        TASK_CATEGORY_ROW_TEMPLATE.format(id=row[0], name=row[1]) for row in cur.fetchall()
+    )
+    cur.close()
+    conn.close()
+    return TASK_CATEGORY_LIST_TEMPLATE.format(rows=rows)
+
+@app.get("/section/tasks/categories", response_class=HTMLResponse)
+async def tasks_categories():
+    return HTMLResponse(render_task_category_list())
+
+@app.post("/section/tasks/categories/add", response_class=HTMLResponse)
+async def add_task_category(name: str = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO task_category (id, name) VALUES (%s, %s);", (str(uuid.uuid4()), name))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_task_category_list()
+
+@app.get("/section/tasks/categories/edit/{cat_id}", response_class=HTMLResponse)
+async def edit_task_category_form(cat_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM task_category WHERE id = %s;", (cat_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='2'>Категория не найдена</td></tr>")
+    return TASK_CATEGORY_EDIT_TEMPLATE.format(id=row[0], name=row[1])
+
+@app.post("/section/tasks/categories/edit/{cat_id}", response_class=HTMLResponse)
+async def edit_task_category(cat_id: str, name: str = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE task_category SET name = %s WHERE id = %s;", (name, cat_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_task_category_list()
+
+@app.delete("/section/tasks/categories/delete/{cat_id}", response_class=HTMLResponse)
+async def delete_task_category(cat_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM task_category WHERE id = %s;", (cat_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_task_category_list()
+
+# --- Карточки задач ---
+TASK_LIST_TEMPLATE = '''
+<div id="task-list">
+<h2>Карточки задач</h2>
+<form hx-post="/section/tasks/tasks/add" hx-target="#task-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
+    <input type="text" name="name" placeholder="Название задачи" required>
+    <input type="text" name="description" placeholder="Описание">
+    <select name="category_id" required>
+        <option value="">Категория...</option>
+        {category_options}
+    </select>
+    <input type="date" name="date" required>
+    <select name="repeat" required>
+        <option value="NONE">Без повтора</option>
+        <option value="DAILY">Ежедневно</option>
+        <option value="WEEKLY">Еженедельно</option>
+    </select>
+    <button type="submit">Добавить</button>
+</form>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr><th>Название</th><th>Описание</th><th>Категория</th><th>Дата</th><th>Повтор</th><th>Действия</th></tr>
+    {rows}
+</table>
+</div>
+'''
+
+TASK_ROW_TEMPLATE = '''
+<tr id="edit-task-row-{id}">
+    <td>{name}</td>
+    <td>{description}</td>
+    <td>{category}</td>
+    <td>{date}</td>
+    <td>{repeat}</td>
+    <td>
+        <button hx-get="/section/tasks/tasks/edit/{id}" hx-target="#edit-task-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button hx-delete="/section/tasks/tasks/delete/{id}" hx-target="#task-list" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
+'''
+
+TASK_EDIT_TEMPLATE = '''
+<tr id="edit-task-row-{id}">
+    <td colspan="6">
+        <form hx-post="/section/tasks/tasks/edit/{id}" hx-target="#task-list" hx-swap="outerHTML">
+            <input type="text" name="name" value="{name}" required>
+            <input type="text" name="description" value="{description}">
+            <select name="category_id" required>
+                {category_options}
+            </select>
+            <input type="date" name="date" value="{date}" required>
+            <select name="repeat" required>
+                <option value="NONE" {none}>Без повтора</option>
+                <option value="DAILY" {daily}>Ежедневно</option>
+                <option value="WEEKLY" {weekly}>Еженедельно</option>
+            </select>
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="window.location.reload()">Отмена</button>
+        </form>
+    </td>
+</tr>
+'''
+
+def get_task_category_options(selected=None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM task_category ORDER BY name;")
+    options = ""
+    for row in cur.fetchall():
+        sel = " selected" if selected and row[0] == selected else ""
+        options += f'<option value="{row[0]}"{sel}>{row[1]}</option>'
+    cur.close()
+    conn.close()
+    return options
+
+def render_task_list():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT t.id, t.name, t.description, t.category_id, t.date, t.repeat, c.name
+        FROM task t LEFT JOIN task_category c ON t.category_id = c.id
+        ORDER BY t.name;
+    ''')
+    rows = ""
+    for row in cur.fetchall():
+        rows += TASK_ROW_TEMPLATE.format(
+            id=row[0], name=row[1], description=row[2] or "", category=row[6] or "", date=row[4], repeat=row[5]
+        )
+    cur.close()
+    conn.close()
+    return TASK_LIST_TEMPLATE.format(rows=rows, category_options=get_task_category_options())
+
+@app.get("/section/tasks/tasks", response_class=HTMLResponse)
+async def tasks_tasks():
+    return HTMLResponse(render_task_list())
+
+@app.post("/section/tasks/tasks/add", response_class=HTMLResponse)
+async def add_task(
+    name: str = Form(...),
+    description: str = Form(None),
+    category_id: str = Form(...),
+    date: str = Form(...),
+    repeat: str = Form(...)
+):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO task (id, name, description, category_id, date, repeat) VALUES (%s, %s, %s, %s, %s, %s);",
+        (str(uuid.uuid4()), name, description, category_id, date, repeat)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_task_list()
+
+@app.get("/section/tasks/tasks/edit/{task_id}", response_class=HTMLResponse)
+async def edit_task_form(task_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description, category_id, date, repeat FROM task WHERE id = %s;", (task_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='6'>Задача не найдена</td></tr>")
+    category_options = get_task_category_options(selected=row[3])
+    return TASK_EDIT_TEMPLATE.format(
+        id=row[0], name=row[1], description=row[2] or "", category_options=category_options, date=row[4],
+        none="selected" if row[5] == "NONE" else "", daily="selected" if row[5] == "DAILY" else "", weekly="selected" if row[5] == "WEEKLY" else ""
+    )
+
+@app.post("/section/tasks/tasks/edit/{task_id}", response_class=HTMLResponse)
+async def edit_task(task_id: str, name: str = Form(...), description: str = Form(None), category_id: str = Form(...), date: str = Form(...), repeat: str = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE task SET name = %s, description = %s, category_id = %s, date = %s, repeat = %s WHERE id = %s;",
+        (name, description, category_id, date, repeat, task_id)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_task_list()
+
+@app.delete("/section/tasks/tasks/delete/{task_id}", response_class=HTMLResponse)
+async def delete_task(task_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM task WHERE id = %s;", (task_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_task_list()
+
+@app.get("/section/tasks/marks", response_class=HTMLResponse)
+async def tasks_marks(show_completed: str = "0"):
+    today = date.today()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # 1. Для всех задач task ищем записи в task_entry, если нет — создаём
+    cur.execute("SELECT id FROM task;")
+    all_task_ids = [row[0] for row in cur.fetchall()]
+    for task_id in all_task_ids:
+        cur.execute("SELECT 1 FROM task_entry WHERE task_id = %s AND date = %s;", (task_id, today))
+        if not cur.fetchone():
+            cur.execute(
+                "INSERT INTO task_entry (id, task_id, date, completed) VALUES (%s, %s, %s, %s);",
+                (str(uuid.uuid4()), task_id, today, False)
+            )
+    conn.commit()
+    # 2. Для выполненных задач с repeat = DAILY или WEEKLY создаём новые записи, если нужно
+    # DAILY
+    cur.execute('''
+        SELECT t.id, MAX(e.date) as last_date
+        FROM task t
+        JOIN task_entry e ON t.id = e.task_id
+        WHERE t.repeat = 'DAILY' AND e.completed = TRUE
+        GROUP BY t.id
+    ''')
+    for task_id, last_date in cur.fetchall():
+        if last_date is not None and (today - last_date).days >= 1:
+            cur.execute("SELECT 1 FROM task_entry WHERE task_id = %s AND date = %s;", (task_id, today))
+            if not cur.fetchone():
+                cur.execute(
+                    "INSERT INTO task_entry (id, task_id, date, completed) VALUES (%s, %s, %s, %s);",
+                    (str(uuid.uuid4()), task_id, today, False)
+                )
+    # WEEKLY
+    cur.execute('''
+        SELECT t.id, MAX(e.date) as last_date
+        FROM task t
+        JOIN task_entry e ON t.id = e.task_id
+        WHERE t.repeat = 'WEEKLY' AND e.completed = TRUE
+        GROUP BY t.id
+    ''')
+    for task_id, last_date in cur.fetchall():
+        if last_date is not None and (today - last_date).days >= 7:
+            cur.execute("SELECT 1 FROM task_entry WHERE task_id = %s AND date = %s;", (task_id, today))
+            if not cur.fetchone():
+                cur.execute(
+                    "INSERT INTO task_entry (id, task_id, date, completed) VALUES (%s, %s, %s, %s);",
+                    (str(uuid.uuid4()), task_id, today, False)
+                )
+    conn.commit()
+    # 3. Получаем задачи
+    if show_completed == "1":
+        cur.execute('''
+            SELECT e.id, t.name, t.description, t.date, t.repeat, e.date, e.completed
+            FROM task_entry e
+            JOIN task t ON e.task_id = t.id
+            ORDER BY e.date ASC
+        ''')
+    else:
+        cur.execute('''
+            SELECT e.id, t.name, t.description, t.date, t.repeat, e.date, e.completed
+            FROM task_entry e
+            JOIN task t ON e.task_id = t.id
+            WHERE e.completed = FALSE
+            ORDER BY e.date ASC
+        ''')
+    rows = ""
+    for entry_id, name, description, task_date, repeat, entry_date, completed in cur.fetchall():
+        checked = "checked" if completed else ""
+        is_overdue = not completed and entry_date < today
+        row_style = ' style="background: #d4edda;"' if completed else (' style="background: #f8d7da;"' if is_overdue else '')
+        delete_btn = f'<button hx-delete="/section/tasks/marks/delete/{entry_id}" hx-target="closest tr" hx-swap="outerHTML">🗑️</button>' if show_completed == "1" else ""
+        last_col = f'<td>{delete_btn}</td>' if show_completed == "1" else ""
+        rows += f'''<tr{row_style}><td>{name}</td><td>{description or ''}</td><td>{task_date}</td><td>{repeat}</td><td>{entry_date}</td><td><input type="checkbox" hx-post="/section/tasks/marks/toggle/{entry_id}" hx-target="#tasks-marks-table-area" hx-swap="outerHTML" {checked}></td>{last_col}</tr>'''
+    cur.close()
+    conn.close()
+    checked_flag = "checked" if show_completed == "1" else ""
+    table_width = "100%"
+    th_delete = '<th></th>' if show_completed == "1" else ''
+    html = f'''
+    <div id="tasks-marks-table-area">
+        <h2>Задачи</h2>
+        <label><input type="checkbox" id="show-completed-tasks" {checked_flag} hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" hx-vals='{{"show_completed": "{1 if show_completed == "0" else 0}"}}'> Показывать выполненные задачи</label>
+        <table id="tasks-marks-table" border="1" cellpadding="8" style="border-collapse: collapse; width: {table_width};">
+            <tr><th>Название</th><th>Описание</th><th>Дата задачи</th><th>Повтор</th><th>Дата отметки</th><th>Выполнено</th>{th_delete}</tr>
+            {rows}
+        </table>
+    </div>
+    '''
+    return HTMLResponse(html)
+
+@app.post("/section/tasks/marks/toggle/{entry_id}", response_class=HTMLResponse)
+async def toggle_task_entry(entry_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT completed FROM task_entry WHERE id = %s;", (entry_id,))
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return HTMLResponse("")
+    new_value = not row[0]
+    cur.execute("UPDATE task_entry SET completed = %s WHERE id = %s;", (new_value, entry_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    # Возвращаем всю таблицу
+    return await tasks_marks()
+
+@app.delete("/section/tasks/marks/delete/{entry_id}", response_class=HTMLResponse)
+async def delete_task_entry(entry_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM task_entry WHERE id = %s;", (entry_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return HTMLResponse("")
 
 @app.get("/section/nutrition", response_class=HTMLResponse)
 async def section_nutrition():
