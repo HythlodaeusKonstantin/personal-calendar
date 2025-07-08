@@ -2,12 +2,38 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Personal Calendar</title>
+    <title>Персональный календарь</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; }
+        .header { padding: 24px 0 12px 0; text-align: center; font-size: 2rem; font-weight: bold; }
+        .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+        .tab { padding: 8px 20px; border: none; background: #f0f0f0; cursor: pointer; font-size: 1rem; border-radius: 8px 8px 0 0; }
+        .tab.active, .tab:focus { background: #fff; border-bottom: 2px solid #1976d2; color: #1976d2; outline: none; }
+        .tab:not(.active):hover { background: #e0e0e0; }
+        .tab-content { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px #0001; padding: 32px 24px; min-height: 120px; }
+    </style>
 </head>
 <body>
-    <h1>Добро пожаловать в Personal Calendar!</h1>
-    <button hx-get="/events" hx-target="#events" hx-swap="innerHTML">Показать события</button>
-    <div id="events"></div>
+    <div class="header">Персональный календарь</div>
+    <div class="tabs">
+        <button class="tab active" id="tab-habits" hx-get="/section/habits" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Привычки</button>
+        <button class="tab" id="tab-tasks" hx-get="/section/tasks" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Задачи</button>
+        <button class="tab" id="tab-nutrition" hx-get="/section/nutrition" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Питание</button>
+        <button class="tab" id="tab-sport" hx-get="/section/sport" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Спорт</button>
+    </div>
+    <div class="tab-content" id="tab-content">
+        <div>Привычки</div>
+    </div>
+    <script>
+        function setActiveTab(tab) {
+            document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+            tab.classList.add('active');
+        }
+        // Автоматически загружаем первую вкладку при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('tab-habits').click();
+        });
+    </script>
 </body>
 </html> 
