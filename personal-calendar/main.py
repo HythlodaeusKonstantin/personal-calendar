@@ -5,6 +5,7 @@ import psycopg2
 import os
 from psycopg2 import sql
 import uuid
+from datetime import date
 
 app = FastAPI()
 
@@ -242,7 +243,64 @@ async def section_habits():
 
 @app.get("/section/habits/marks", response_class=HTMLResponse)
 async def habits_marks():
-    return HTMLResponse("<div>Отметки</div>")
+    today = date.today()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Получаем все привычки
+    cur.execute("SELECT id, name FROM habit ORDER BY name;")
+    habits = cur.fetchall()
+    # Проверяем, есть ли записи habit_entry на сегодня для каждой привычки
+    for habit_id, _ in habits:
+        cur.execute("SELECT 1 FROM habit_entry WHERE habit_id = %s AND date = %s;", (habit_id, today))
+        if not cur.fetchone():
+            cur.execute(
+                "INSERT INTO habit_entry (id, habit_id, date, completed) VALUES (%s, %s, %s, %s);",
+                (str(uuid.uuid4()), habit_id, today, False)
+            )
+    conn.commit()
+    # Получаем все записи habit_entry на сегодня с названиями привычек
+    cur.execute('''
+        SELECT e.id, h.name, e.completed
+        FROM habit_entry e JOIN habit h ON e.habit_id = h.id
+        WHERE e.date = %s
+        ORDER BY h.name;
+    ''', (today,))
+    rows = ""
+    for entry_id, habit_name, completed in cur.fetchall():
+        checked = "checked" if completed else ""
+        rows += f'''<tr><td>{habit_name}</td><td><input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="this" hx-swap="outerHTML" {checked}></td></tr>'''
+    cur.close()
+    conn.close()
+    html = f'''
+    <h2>Отметки за {today.strftime('%d.%m.%Y')}</h2>
+    <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+        <tr><th>Привычка</th><th>Выполнено</th></tr>
+        {rows}
+    </table>
+    '''
+    return HTMLResponse(html)
+
+@app.post("/section/habits/marks/toggle/{entry_id}", response_class=HTMLResponse)
+async def toggle_habit_entry(entry_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Получаем текущее значение
+    cur.execute("SELECT completed FROM habit_entry WHERE id = %s;", (entry_id,))
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return HTMLResponse("")
+    new_value = not row[0]
+    cur.execute("UPDATE habit_entry SET completed = %s WHERE id = %s;", (new_value, entry_id))
+    # Получаем имя привычки
+    cur.execute("SELECT h.name FROM habit_entry e JOIN habit h ON e.habit_id = h.id WHERE e.id = %s;", (entry_id,))
+    habit_name = cur.fetchone()[0]
+    conn.commit()
+    cur.close()
+    conn.close()
+    checked = "checked" if new_value else ""
+    return HTMLResponse(f'<input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="this" hx-swap="outerHTML" {checked}>')
 
 @app.get("/section/habits/categories", response_class=HTMLResponse)
 async def habits_categories():
