@@ -319,11 +319,12 @@ async def get_events(request: Request):
 # HTML-шаблоны для habit_category
 HABIT_CATEGORY_LIST_TEMPLATE = '''
 <div id="habit-category-list">
-<h2 class="text-2xl font-bold mb-4">Категории привычек</h2>
-<form hx-post="/section/habits/category/add" hx-target="#habit-category-list" hx-swap="outerHTML" class="mb-4">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Категории привычек</h2>
+<form hx-post="/section/habits/category/add" hx-target="#habit-category-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название категории" required>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -336,14 +337,15 @@ HABIT_CATEGORY_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 HABIT_CATEGORY_ROW_TEMPLATE = '''
 <tr id="edit-habit-category-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/category/edit/{id}" hx-target="#edit-habit-category-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/category/delete/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/habits/category/edit/{id}" hx-target="#edit-habit-category-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/habits/category/delete/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -353,8 +355,8 @@ HABIT_CATEGORY_EDIT_TEMPLATE = '''
     <td colspan="2" class="p-2">
         <form hx-post="/section/habits/category/edit/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/habits/category/row/{id}" 
                 hx-target="#edit-habit-category-row-{id}" 
                 hx-swap="outerHTML">
@@ -378,12 +380,12 @@ def render_habit_category_list():
 
 HABITS_SECTION_TEMPLATE = '''
 <div>
-    <div class="flex border-b">
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_marks}" id="tab-habit-marks" hx-get="/section/habits/marks" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_categories}" id="tab-habit-categories" hx-get="/section/habits/categories" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_habits}" id="tab-habit-habits" hx-get="/section/habits/habits" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки привычек</button>
+    <div class="flex border-b mobile-tabs tabs overflow-x-auto">
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_marks} mobile-btn" id="tab-habit-marks" hx-get="/section/habits/marks" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_categories} mobile-btn" id="tab-habit-categories" hx-get="/section/habits/categories" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_habits} mobile-btn" id="tab-habit-habits" hx-get="/section/habits/habits" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки привычек</button>
     </div>
-    <div id="habits-subsection" class="p-4">{content}</div>
+    <div id="habits-subsection" class="p-2 lg:p-4">{content}</div>
 </div>
 <script>
 function setActiveSubTab(tab) {{
@@ -436,7 +438,8 @@ async def habits_marks():
     conn.close()
     html = f'''
     <div id="habits-marks-table-area">
-        <h2 class="text-2xl font-bold mb-4">Отметки за {today.strftime('%d.%m.%Y')}</h2>
+        <h2 class="text-xl lg:text-2xl font-bold mb-4">Отметки за {today.strftime('%d.%m.%Y')}</h2>
+        <div class="responsive-table">
         <table id="habits-marks-table" class="table-auto w-full border-collapse border border-slate-400">
             <thead>
                 <tr>
@@ -448,6 +451,7 @@ async def habits_marks():
             {rows}
             </tbody>
         </table>
+        </div>
     </div>
     '''
     return HTMLResponse(html)
@@ -479,8 +483,8 @@ async def habits_categories():
 # --- Карточки привычек (habit) ---
 HABIT_LIST_TEMPLATE = '''
 <div id="habit-list">
-<h2 class="text-2xl font-bold mb-4">Карточки привычек</h2>
-<form hx-post="/section/habits/habits/add" hx-target="#habit-list" hx-swap="outerHTML" class="mb-4">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Карточки привычек</h2>
+<form hx-post="/section/habits/habits/add" hx-target="#habit-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название привычки" required>
     <input class="border p-2 rounded w-full mb-2" type="text" name="description" placeholder="Описание">
     <select class="border p-2 rounded w-full mb-2" name="category_id" required>
@@ -492,8 +496,9 @@ HABIT_LIST_TEMPLATE = '''
         <option value="MEDIUM">Средний</option>
         <option value="LOW">Низкий</option>
     </select>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -509,6 +514,7 @@ HABIT_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 HABIT_ROW_TEMPLATE = '''
@@ -518,8 +524,8 @@ HABIT_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{category}</td>
     <td class="border border-slate-300 p-2">{priority}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/habits/edit/{id}" hx-target="#edit-habit-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/habits/delete/{id}" hx-target="#habit-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/habits/habits/edit/{id}" hx-target="#edit-habit-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/habits/habits/delete/{id}" hx-target="#habit-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -538,8 +544,8 @@ HABIT_EDIT_TEMPLATE = '''
                 <option value="MEDIUM" {medium}>Средний</option>
                 <option value="LOW" {low}>Низкий</option>
             </select>
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/habits/habits/row/{id}" 
                 hx-target="#edit-habit-row-{id}" 
                 hx-swap="outerHTML">
@@ -697,12 +703,12 @@ async def habit_category_row(cat_id: str):
 # --- Раздел Задачи ---
 TASKS_SECTION_TEMPLATE = '''
 <div>
-    <div class="flex border-b">
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_marks}" id="tab-task-marks" hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_categories}" id="tab-task-categories" hx-get="/section/tasks/categories" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_tasks}" id="tab-task-tasks" hx-get="/section/tasks/tasks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки задач</button>
+    <div class="flex border-b mobile-tabs tabs overflow-x-auto">
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_marks} mobile-btn" id="tab-task-marks" hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_categories} mobile-btn" id="tab-task-categories" hx-get="/section/tasks/categories" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_tasks} mobile-btn" id="tab-task-tasks" hx-get="/section/tasks/tasks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки задач</button>
     </div>
-    <div id="tasks-subsection" class="p-4">{content}</div>
+    <div id="tasks-subsection" class="p-2 lg:p-4">{content}</div>
 </div>
 <script>
 function setActiveSubTab(tab) {{
@@ -724,11 +730,12 @@ async def section_tasks():
 # --- Категории задач ---
 TASK_CATEGORY_LIST_TEMPLATE = '''
 <div id="task-category-list">
-<h2 class="text-2xl font-bold mb-4">Категории задач</h2>
-<form hx-post="/section/tasks/categories/add" hx-target="#task-category-list" hx-swap="outerHTML" class="mb-4">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Категории задач</h2>
+<form hx-post="/section/tasks/categories/add" hx-target="#task-category-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название категории" required>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -741,14 +748,15 @@ TASK_CATEGORY_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 TASK_CATEGORY_ROW_TEMPLATE = '''
 <tr id="edit-task-category-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/categories/edit/{id}" hx-target="#edit-task-category-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/categories/delete/{id}" hx-target="#task-category-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/tasks/categories/edit/{id}" hx-target="#edit-task-category-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/tasks/categories/delete/{id}" hx-target="#task-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -758,8 +766,8 @@ TASK_CATEGORY_EDIT_TEMPLATE = '''
     <td colspan="2" class="p-2">
         <form hx-post="/section/tasks/categories/edit/{id}" hx-target="#task-category-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/tasks/categories/row/{id}" 
                 hx-target="#edit-task-category-row-{id}" 
                 hx-swap="outerHTML">
@@ -842,8 +850,8 @@ async def task_category_row(cat_id: str):
 # --- Карточки задач ---
 TASK_LIST_TEMPLATE = '''
 <div id="task-list">
-<h2 class="text-2xl font-bold mb-4">Карточки задач</h2>
-<form hx-post="/section/tasks/tasks/add" hx-target="#task-list" hx-swap="outerHTML" class="mb-4">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Карточки задач</h2>
+<form hx-post="/section/tasks/tasks/add" hx-target="#task-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название задачи" required>
     <input class="border p-2 rounded w-full mb-2" type="text" name="description" placeholder="Описание">
     <select class="border p-2 rounded w-full mb-2" name="category_id" required>
@@ -856,8 +864,9 @@ TASK_LIST_TEMPLATE = '''
         <option value="DAILY">Ежедневно</option>
         <option value="WEEKLY">Еженедельно</option>
     </select>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -874,6 +883,7 @@ TASK_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 TASK_ROW_TEMPLATE = '''
@@ -884,8 +894,8 @@ TASK_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{date}</td>
     <td class="border border-slate-300 p-2">{repeat}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/tasks/edit/{id}" hx-target="#edit-task-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/tasks/delete/{id}" hx-target="#task-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/tasks/tasks/edit/{id}" hx-target="#edit-task-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/tasks/tasks/delete/{id}" hx-target="#task-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -905,8 +915,8 @@ TASK_EDIT_TEMPLATE = '''
                 <option value="DAILY" {daily}>Ежедневно</option>
                 <option value="WEEKLY" {weekly}>Еженедельно</option>
             </select>
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/tasks/tasks/row/{id}" 
                 hx-target="#edit-task-row-{id}" 
                 hx-swap="outerHTML">
@@ -1079,7 +1089,7 @@ async def tasks_marks(show_completed: str = "0"):
         checked = "checked" if completed else ""
         is_overdue = not completed and entry_date < today
         row_class = ' class="bg-green-100"' if completed else (' class="bg-red-100"' if is_overdue else '')
-        delete_btn = f'<button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/marks/delete/{entry_id}" hx-target="closest tr" hx-swap="outerHTML">🗑️</button>' if show_completed == "1" else ""
+        delete_btn = f'<button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/tasks/marks/delete/{entry_id}" hx-target="closest tr" hx-swap="outerHTML">🗑️</button>' if show_completed == "1" else ""
         last_col = f'<td class="border border-slate-300 p-2">{delete_btn}</td>' if show_completed == "1" else ""
         rows += f'''<tr{row_class}><td class="border border-slate-300 p-2">{name}</td><td class="border border-slate-300 p-2">{description or ''}</td><td class="border border-slate-300 p-2">{task_date}</td><td class="border border-slate-300 p-2">{repeat}</td><td class="border border-slate-300 p-2">{entry_date}</td><td class="border border-slate-300 p-2 cursor-pointer" hx-post="/section/tasks/marks/toggle/{entry_id}" hx-target="#tasks-marks-table-area" hx-swap="outerHTML"><input type="checkbox" {checked} class="pointer-events-none"></td>{last_col}</tr>'''
     cur.close()
@@ -1089,11 +1099,12 @@ async def tasks_marks(show_completed: str = "0"):
     th_delete = '<th></th>' if show_completed == "1" else ''
     html = f'''
     <div id="tasks-marks-table-area">
-        <h2 class="text-2xl font-bold mb-4">Задачи</h2>
+        <h2 class="text-xl lg:text-2xl font-bold mb-4">Задачи</h2>
         <label class="inline-flex items-center mb-4">
             <input type="checkbox" id="show-completed-tasks" {checked_flag} hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" hx-vals='{{"show_completed": "{1 if show_completed == "0" else 0}"}}' class="form-checkbox h-5 w-5 text-blue-600">
             <span class="ml-2 text-gray-700">Показывать выполненные задачи</span>
         </label>
+        <div class="responsive-table">
         <table id="tasks-marks-table" class="table-auto w-full border-collapse border border-slate-400">
             <thead>
                 <tr>
@@ -1110,6 +1121,7 @@ async def tasks_marks(show_completed: str = "0"):
             {rows}
             </tbody>
         </table>
+        </div>
     </div>
     '''
     return HTMLResponse(html)
@@ -1145,13 +1157,13 @@ async def delete_task_entry(entry_id: str):
 # --- Раздел Питание ---
 NUTRITION_SECTION_TEMPLATE = '''
 <div>
-    <div class="flex border-b">
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_meal_log}" id="tab-nutrition-meal-log" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Приемы пищи</button>
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_products}" id="tab-nutrition-products" hx-get="/section/nutrition/products" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Продукты</button>
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_dishes}" id="tab-nutrition-dishes" hx-get="/section/nutrition/dishes" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Блюда</button>
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_weight}" id="tab-nutrition-weight" hx-get="/section/nutrition/weight" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Вес</button>
+    <div class="flex border-b mobile-tabs tabs overflow-x-auto">
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_meal_log} mobile-btn" id="tab-nutrition-meal-log" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Приемы пищи</button>
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_products} mobile-btn" id="tab-nutrition-products" hx-get="/section/nutrition/products" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Продукты</button>
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_dishes} mobile-btn" id="tab-nutrition-dishes" hx-get="/section/nutrition/dishes" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Блюда</button>
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_weight} mobile-btn" id="tab-nutrition-weight" hx-get="/section/nutrition/weight" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Вес</button>
     </div>
-    <div id="nutrition-subsection" class="p-4">{content}</div>
+    <div id="nutrition-subsection" class="p-2 lg:p-4">{content}</div>
 </div>
 <script>
 function setActiveSubTab(tab) {{
@@ -1163,16 +1175,17 @@ function setActiveSubTab(tab) {{
 
 MEAL_LOG_LIST_TEMPLATE = '''
 <div id="meal-log-list">
-<h2 class="text-2xl font-bold mb-4">Приемы пищи</h2>
-<form hx-post="/section/nutrition/meal-log/add" hx-target="#meal-log-list" hx-swap="outerHTML" class="mb-4 flex gap-2 items-center">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Приемы пищи</h2>
+<form hx-post="/section/nutrition/meal-log/add" hx-target="#meal-log-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded" type="date" name="date" value="{date}" required>
     <select class="border p-2 rounded" name="dish_id" required>
         <option value="">Блюдо...</option>
         {dish_options}
     </select>
-    <input class="border p-2 rounded w-24" type="number" step="0.01" name="consumed_grams" placeholder="Граммы" required>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <input class="border p-2 rounded" type="number" step="0.01" name="consumed_grams" placeholder="Граммы" required>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -1186,6 +1199,7 @@ MEAL_LOG_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 MEAL_LOG_ROW_TEMPLATE = '''
@@ -1193,8 +1207,8 @@ MEAL_LOG_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{dish_name}</td>
     <td class="border border-slate-300 p-2">{consumed_grams}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#edit-meal-log-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/meal-log/delete/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#edit-meal-log-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/nutrition/meal-log/delete/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -1208,8 +1222,8 @@ MEAL_LOG_EDIT_TEMPLATE = '''
             </select>
             <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="consumed_grams" value="{consumed_grams}" required>
             <input type="hidden" name="date" value="{date}">
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/nutrition/meal-log/row/{id}?date={date}" 
                 hx-target="#edit-meal-log-row-{id}" 
                 hx-swap="outerHTML">
@@ -1340,13 +1354,14 @@ async def section_nutrition():
 # --- Продукты ---
 PRODUCT_LIST_TEMPLATE = '''
 <div id="product-list">
-<h2 class="text-2xl font-bold mb-4">Продукты</h2>
-<form hx-post="/section/nutrition/products/add" hx-target="#product-list" hx-swap="outerHTML" class="mb-4">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Продукты</h2>
+<form hx-post="/section/nutrition/products/add" hx-target="#product-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название продукта" required>
     <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="calories_per_100g" placeholder="Ккал на 100г" required>
     <input class="border p-2 rounded w-full mb-2" type="text" name="micro_description" placeholder="Описание">
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -1361,6 +1376,7 @@ PRODUCT_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 PRODUCT_ROW_TEMPLATE = '''
@@ -1369,8 +1385,8 @@ PRODUCT_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{calories_per_100g}</td>
     <td class="border border-slate-300 p-2">{micro_description}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/products/edit/{id}" hx-target="#edit-product-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/products/delete/{id}" hx-target="#product-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/nutrition/products/edit/{id}" hx-target="#edit-product-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/nutrition/products/delete/{id}" hx-target="#product-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -1382,8 +1398,8 @@ PRODUCT_EDIT_TEMPLATE = '''
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="calories_per_100g" value="{calories_per_100g}" required>
             <input class="border p-2 rounded w-full mb-2" type="text" name="micro_description" value="{micro_description}">
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/nutrition/products/row/{id}" 
                 hx-target="#edit-product-row-{id}" 
                 hx-swap="outerHTML">
@@ -1468,12 +1484,13 @@ async def product_row(product_id: str):
 # --- Блюда ---
 DISH_LIST_TEMPLATE = '''
 <div id="dish-list">
-<h2 class="text-2xl font-bold mb-4">Блюда</h2>
-<form hx-post="/section/nutrition/dishes/add" hx-target="#dish-list" hx-swap="outerHTML" class="mb-4">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Блюда</h2>
+<form hx-post="/section/nutrition/dishes/add" hx-target="#dish-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название блюда" required>
     <input class="border p-2 rounded w-full mb-2" type="text" name="description" placeholder="Описание">
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -1487,6 +1504,7 @@ DISH_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 DISH_ROW_TEMPLATE = '''
@@ -1494,8 +1512,8 @@ DISH_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{name}</td>
     <td class="border border-slate-300 p-2">{description}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/dishes/edit/{id}" hx-target="#edit-dish-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/delete/{id}" hx-target="#dish-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/nutrition/dishes/edit/{id}" hx-target="#edit-dish-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/nutrition/dishes/delete/{id}" hx-target="#dish-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -1506,8 +1524,8 @@ DISH_EDIT_TEMPLATE = '''
         <form hx-post="/section/nutrition/dishes/edit/{id}" hx-target="#dish-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/nutrition/dishes/row/{id}" 
                 hx-target="#edit-dish-row-{id}" 
                 hx-swap="outerHTML">
@@ -1577,12 +1595,13 @@ async def delete_dish(dish_id: str):
 
 WEIGHT_LIST_TEMPLATE = '''
 <div id="weight-list">
-<h2 class="text-2xl font-bold mb-4">Вес</h2>
-<form hx-post="/section/nutrition/weight/add" hx-target="#weight-list" hx-swap="outerHTML" class="mb-4 flex gap-2 items-center">
+<h2 class="text-xl lg:text-2xl font-bold mb-4">Вес</h2>
+<form hx-post="/section/nutrition/weight/add" hx-target="#weight-list" hx-swap="outerHTML" class="mb-4 mobile-form">
     <input class="border p-2 rounded" type="date" name="date" value="{today}" required>
-    <input class="border p-2 rounded w-24" type="number" step="0.01" name="weight" placeholder="Вес (кг)" required>
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
+    <input class="border p-2 rounded" type="number" step="0.01" name="weight" placeholder="Вес (кг)" required>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Добавить</button>
 </form>
+<div class="responsive-table">
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
@@ -1596,6 +1615,7 @@ WEIGHT_LIST_TEMPLATE = '''
     </tbody>
 </table>
 </div>
+</div>
 '''
 
 WEIGHT_ROW_TEMPLATE = '''
@@ -1603,8 +1623,8 @@ WEIGHT_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{date}</td>
     <td class="border border-slate-300 p-2">{weight}</td>
     <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/weight/edit/{id}" hx-target="#edit-weight-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/weight/delete/{id}" hx-target="#weight-list" hx-swap="outerHTML">🗑️</button>
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-get="/section/nutrition/weight/edit/{id}" hx-target="#edit-weight-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mobile-btn" hx-delete="/section/nutrition/weight/delete/{id}" hx-target="#weight-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
@@ -1615,8 +1635,8 @@ WEIGHT_EDIT_TEMPLATE = '''
         <form hx-post="/section/nutrition/weight/edit/{id}" hx-target="#weight-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="date" name="date" value="{date}" required>
             <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="weight" value="{weight}" required>
-            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mobile-btn" type="button" 
                 hx-get="/section/nutrition/weight/row/{id}" 
                 hx-target="#edit-weight-row-{id}" 
                 hx-swap="outerHTML">
@@ -1702,8 +1722,8 @@ async def weight_row(weight_id: str):
 
 SETTINGS_SECTION_TEMPLATE = '''
 <div>
-    <div class="flex border-b">
-        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 active" id="tab-settings-general" hx-get="/section/settings/general" hx-target="#settings-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Общие</button>
+    <div class="flex border-b tabs">
+        <button class="tab py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 active" id="tab-settings-general" hx-get="/section/settings/general" hx-target="#settings-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Общие</button>
     </div>
     <div id="settings-subsection" class="p-4">{content}</div>
 </div>
@@ -1716,16 +1736,16 @@ function setActiveSubTab(tab) {{
 '''
 
 SETTINGS_TEMPLATE = '''
-<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md" id="settings-goal-form">
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">Настройки калорий</h2>
-    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" class="space-y-4">
+<div class="max-w-md mx-auto bg-white p-4 lg:p-6 rounded-lg shadow-md" id="settings-goal-form">
+    <h2 class="text-xl lg:text-2xl font-bold mb-4 text-gray-800">Настройки калорий</h2>
+    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" class="space-y-4 mobile-form">
         <div>
             <label class="block text-gray-700 text-sm font-bold mb-2" for="target_calories">
                 Целевые калории в день:
             </label>
             <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="target_calories" type="number" name="target_calories" value="{target_calories}" min="0" required>
         </div>
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">Сохранить</button>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mobile-btn" type="submit">Сохранить</button>
     </form>
 </div>
 '''
@@ -1856,4 +1876,20 @@ async def dish_row(dish_id: str):
     return DISH_ROW_TEMPLATE.format(
         id=row[0], name=row[1], description=row[2] or ""
     )
+
+@app.get("/section/nutrition/meal-log/row/{log_id}", response_class=HTMLResponse)
+async def meal_log_row(log_id: str, date: str = Query(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT m.id, d.name, m.dish_id, m.consumed_grams
+        FROM meal_log m JOIN dish d ON m.dish_id = d.id
+        WHERE m.id = %s
+    ''', (log_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse(f"<tr><td colspan='3'>Запись не найдена</td></tr>")
+    return MEAL_LOG_ROW_TEMPLATE.format(id=row[0], dish_name=row[1], consumed_grams=row[3], date=date)
   

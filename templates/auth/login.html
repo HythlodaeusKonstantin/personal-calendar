@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход - Персональный календарь</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
@@ -22,6 +23,7 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 400px;
+            margin: 20px;
         }
         .auth-title {
             text-align: center;
@@ -63,6 +65,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s;
+            min-height: 44px; /* Минимальная высота для касания */
         }
         .submit-btn:hover {
             transform: translateY(-2px);
@@ -72,6 +75,46 @@
             color: #666;
             margin-bottom: 30px;
             line-height: 1.5;
+        }
+        
+        /* Мобильные стили */
+        @media (max-width: 768px) {
+            .auth-container {
+                padding: 30px 20px;
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .auth-title {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+            
+            .auth-description {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            
+            .form-group input {
+                padding: 14px;
+                font-size: 16px; /* Предотвращает зум на iOS */
+            }
+            
+            .submit-btn {
+                padding: 16px;
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 20px 15px;
+                margin: 5px;
+            }
+            
+            .auth-title {
+                font-size: 1.25rem;
+            }
         }
     </style>
 </head>
