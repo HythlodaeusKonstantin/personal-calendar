@@ -349,12 +349,17 @@ HABIT_CATEGORY_ROW_TEMPLATE = '''
 '''
 
 HABIT_CATEGORY_EDIT_TEMPLATE = '''
-<tr id="edit-row-{id}">
-    <td colspan="2" class="p-2">
+<tr id="edit-habit-category-row-{id}">
+    <td colspan="3" class="p-2">
         <form hx-post="/section/habits/category/edit/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/habits/category/row/{id}" 
+                hx-target="#edit-habit-category-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -534,7 +539,12 @@ HABIT_EDIT_TEMPLATE = '''
                 <option value="LOW" {low}>Низкий</option>
             </select>
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/habits/habits/row/{id}" 
+                hx-target="#edit-habit-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -672,6 +682,18 @@ async def delete_habit_category(cat_id: str):
     conn.close()
     return render_habit_category_list()
 
+@app.get("/section/habits/category/row/{cat_id}", response_class=HTMLResponse)
+async def habit_category_row(cat_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM habit_category WHERE id = %s", (cat_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='2'>Категория не найдена</td></tr>")
+    return HABIT_CATEGORY_ROW_TEMPLATE.format(id=row[0], name=row[1])
+
 # --- Раздел Задачи ---
 TASKS_SECTION_TEMPLATE = '''
 <div>
@@ -733,11 +755,16 @@ TASK_CATEGORY_ROW_TEMPLATE = '''
 
 TASK_CATEGORY_EDIT_TEMPLATE = '''
 <tr id="edit-task-category-row-{id}">
-    <td colspan="2" class="p-2">
+    <td colspan="3" class="p-2">
         <form hx-post="/section/tasks/categories/edit/{id}" hx-target="#task-category-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/tasks/categories/row/{id}" 
+                hx-target="#edit-task-category-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -800,6 +827,18 @@ async def delete_task_category(cat_id: str):
     conn.close()
     return render_task_category_list()
 
+@app.get("/section/tasks/categories/row/{cat_id}", response_class=HTMLResponse)
+async def task_category_row(cat_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM task_category WHERE id = %s", (cat_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='2'>Категория не найдена</td></tr>")
+    return TASK_CATEGORY_ROW_TEMPLATE.format(id=row[0], name=row[1])
+
 # --- Карточки задач ---
 TASK_LIST_TEMPLATE = '''
 <div id="task-list">
@@ -853,7 +892,7 @@ TASK_ROW_TEMPLATE = '''
 
 TASK_EDIT_TEMPLATE = '''
 <tr id="edit-task-row-{id}">
-    <td colspan="6" class="p-2">
+    <td colspan="7" class="p-2">
         <form hx-post="/section/tasks/tasks/edit/{id}" hx-target="#task-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
@@ -862,12 +901,17 @@ TASK_EDIT_TEMPLATE = '''
             </select>
             <input class="border p-2 rounded w-full mb-2" type="date" name="date" value="{date}" required>
             <select class="border p-2 rounded w-full mb-2" name="repeat" required>
-                <option value="NONE" {none}>Без повтора</option>
+                <option value="NONE" {none}>Нет</option>
                 <option value="DAILY" {daily}>Ежедневно</option>
                 <option value="WEEKLY" {weekly}>Еженедельно</option>
             </select>
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/tasks/tasks/row/{id}" 
+                hx-target="#edit-task-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -1334,13 +1378,18 @@ PRODUCT_ROW_TEMPLATE = '''
 
 PRODUCT_EDIT_TEMPLATE = '''
 <tr id="edit-product-row-{id}">
-    <td colspan="4" class="p-2">
+    <td colspan="5" class="p-2">
         <form hx-post="/section/nutrition/products/edit/{id}" hx-target="#product-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="calories_per_100g" value="{calories_per_100g}" required>
             <input class="border p-2 rounded w-full mb-2" type="text" name="micro_description" value="{micro_description}">
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/nutrition/products/row/{id}" 
+                hx-target="#edit-product-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -1402,6 +1451,20 @@ async def delete_product(product_id: str):
     cur.close()
     conn.close()
     return render_product_list()
+
+@app.get("/section/nutrition/products/row/{product_id}", response_class=HTMLResponse)
+async def product_row(product_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, calories_per_100g, micro_description FROM product WHERE id = %s", (product_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='4'>Продукт не найден</td></tr>")
+    return PRODUCT_ROW_TEMPLATE.format(
+        id=row[0], name=row[1], calories_per_100g=row[2], micro_description=row[3] or ""
+    )
 
 # --- Блюда ---
 DISH_LIST_TEMPLATE = '''
@@ -1545,12 +1608,17 @@ async def delete_dish_ingredient(ingredient_id: str):
 
 DISH_EDIT_TEMPLATE = '''
 <tr id="edit-dish-row-{id}">
-    <td colspan="3" class="p-2">
+    <td colspan="4" class="p-2">
         <form hx-post="/section/nutrition/dishes/edit/{id}" hx-target="#dish-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/nutrition/dishes/row/{id}" 
+                hx-target="#edit-dish-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -1649,12 +1717,17 @@ WEIGHT_ROW_TEMPLATE = '''
 
 WEIGHT_EDIT_TEMPLATE = '''
 <tr id="edit-weight-row-{id}">
-    <td colspan="3" class="p-2">
+    <td colspan="4" class="p-2">
         <form hx-post="/section/nutrition/weight/edit/{id}" hx-target="#weight-list" hx-swap="outerHTML">
-            <input class="border p-2 rounded" type="date" name="date" value="{date}" required>
-            <input class="border p-2 rounded w-24" type="number" step="0.01" name="weight" value="{weight}" required>
+            <input class="border p-2 rounded w-full mb-2" type="date" name="date" value="{date}" required>
+            <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="weight" value="{weight}" required>
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">��тмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/nutrition/weight/row/{id}" 
+                hx-target="#edit-weight-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -1718,6 +1791,20 @@ async def delete_weight(weight_id: str):
     cur.close()
     conn.close()
     return render_weight_list()
+
+@app.get("/section/nutrition/weight/row/{weight_id}", response_class=HTMLResponse)
+async def weight_row(weight_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, date, weight FROM personal_data WHERE id = %s", (weight_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='3'>Запись не найдена</td></tr>")
+    return WEIGHT_ROW_TEMPLATE.format(
+        id=row[0], date=row[1], weight=row[2]
+    )
 
 SETTINGS_SECTION_TEMPLATE = '''
 <div>
@@ -1825,4 +1912,54 @@ def logout(session_token: str = Cookie(None)):
     response = RedirectResponse("/")
     response.delete_cookie("session_token")
     return response
+
+@app.get("/section/habits/habits/row/{habit_id}", response_class=HTMLResponse)
+async def habit_row(habit_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT h.id, h.name, h.description, h.category_id, h.priority, c.name
+        FROM habit h LEFT JOIN habit_category c ON h.category_id = c.id
+        WHERE h.id = %s
+    ''', (habit_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='5'>Привычка не найдена</td></tr>")
+    return HABIT_ROW_TEMPLATE.format(
+        id=row[0], name=row[1], description=row[2] or "", category=row[5] or "", priority=row[4]
+    )
+
+@app.get("/section/tasks/tasks/row/{task_id}", response_class=HTMLResponse)
+async def task_row(task_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT t.id, t.name, t.description, t.category_id, t.date, t.repeat, c.name
+        FROM task t LEFT JOIN task_category c ON t.category_id = c.id
+        WHERE t.id = %s
+    ''', (task_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='6'>Задача не найдена</td></tr>")
+    return TASK_ROW_TEMPLATE.format(
+        id=row[0], name=row[1], description=row[2] or "", category=row[6] or "", date=row[4], repeat=row[5]
+    )
+
+@app.get("/section/nutrition/dishes/row/{dish_id}", response_class=HTMLResponse)
+async def dish_row(dish_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description FROM dish WHERE id = %s", (dish_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='3'>Блюдо не найдено</td></tr>")
+    return DISH_ROW_TEMPLATE.format(
+        id=row[0], name=row[1], description=row[2] or ""
+    )
   
