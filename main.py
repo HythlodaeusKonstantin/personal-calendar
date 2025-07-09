@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, APIRouter, Form
+from fastapi import FastAPI, Request, APIRouter, Form, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import psycopg2
@@ -98,6 +98,12 @@ SCHEMA = {
     "calories_goal": [
         ("id", "UUID PRIMARY KEY"),
         ("target_calories", "INTEGER NOT NULL")
+    ],
+    # Личные данные
+    "personal_data": [
+        ("id", "UUID PRIMARY KEY"),
+        ("date", "DATE NOT NULL"),
+        ("weight", "FLOAT NOT NULL")
     ],
 }
 
@@ -928,8 +934,10 @@ async def delete_task_entry(entry_id: str):
 NUTRITION_SECTION_TEMPLATE = '''
 <div>
     <div class="tabs" style="margin-bottom: 0;">
+        <button class="tab {active_meal_log}" id="tab-nutrition-meal-log" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Приемы пищи</button>
         <button class="tab {active_products}" id="tab-nutrition-products" hx-get="/section/nutrition/products" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Продукты</button>
         <button class="tab {active_dishes}" id="tab-nutrition-dishes" hx-get="/section/nutrition/dishes" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Блюда</button>
+        <button class="tab {active_weight}" id="tab-nutrition-weight" hx-get="/section/nutrition/weight" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Вес</button>
     </div>
     <div id="nutrition-subsection" class="tab-content" style="margin-top:0;">{content}</div>
 </div>
@@ -941,11 +949,139 @@ function setActiveSubTab(tab) {{
 </script>
 '''
 
+from fastapi import Query
+from datetime import datetime
+
+MEAL_LOG_LIST_TEMPLATE = '''
+<div id="meal-log-list">
+<h2>Приемы пищи</h2>
+<form id="meal-log-date-form" style="margin-bottom: 16px;">
+    <label>Дата: <input type="date" name="date" value="{date}" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML"></label>
+</form>
+<form hx-post="/section/nutrition/meal-log/add" hx-target="#meal-log-list" hx-swap="outerHTML" style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center;">
+    <select name="dish_id" required>
+        <option value="">Блюдо...</option>
+        {dish_options}
+    </select>
+    <input type="number" step="0.01" name="consumed_grams" placeholder="Граммы" required style="width:90px;">
+    <input type="hidden" name="date" value="{date}">
+    <button type="submit">Добавить</button>
+</form>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr><th>Блюдо</th><th>Граммы</th><th>Действия</th></tr>
+    {rows}
+</table>
+</div>
+'''
+
+MEAL_LOG_ROW_TEMPLATE = '''
+<tr id="edit-meal-log-row-{id}">
+    <td>{dish_name}</td>
+    <td>{consumed_grams}</td>
+    <td>
+        <button hx-get="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#edit-meal-log-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button hx-delete="/section/nutrition/meal-log/delete/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
+'''
+
+MEAL_LOG_EDIT_TEMPLATE = '''
+<tr id="edit-meal-log-row-{id}">
+    <td colspan="3">
+        <form hx-post="/section/nutrition/meal-log/edit/{id}" hx-target="#meal-log-list" hx-swap="outerHTML">
+            <select name="dish_id" required>
+                {dish_options}
+            </select>
+            <input type="number" step="0.01" name="consumed_grams" value="{consumed_grams}" required style="width:90px;">
+            <input type="hidden" name="date" value="{date}">
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="window.location.reload()">Отмена</button>
+        </form>
+    </td>
+</tr>
+'''
+
+def get_dish_options(selected=None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM dish ORDER BY name;")
+    options = ""
+    for row in cur.fetchall():
+        sel = " selected" if selected and row[0] == selected else ""
+        options += f'<option value="{row[0]}"{sel}>{row[1]}</option>'
+    cur.close()
+    conn.close()
+    return options
+
+def render_meal_log_list(date_str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT m.id, d.name, m.consumed_grams
+        FROM meal_log m JOIN dish d ON m.dish_id = d.id
+        WHERE m.date = %s
+        ORDER BY d.name;
+    ''', (date_str,))
+    rows = "".join(
+        MEAL_LOG_ROW_TEMPLATE.format(id=row[0], dish_name=row[1], consumed_grams=row[2], date=date_str) for row in cur.fetchall()
+    )
+    cur.close()
+    conn.close()
+    return MEAL_LOG_LIST_TEMPLATE.format(rows=rows, dish_options=get_dish_options(), date=date_str)
+
+@app.get("/section/nutrition/meal-log", response_class=HTMLResponse)
+async def nutrition_meal_log(date: str = Query(None)):
+    if not date:
+        date = datetime.now().date().isoformat()
+    return HTMLResponse(render_meal_log_list(date))
+
+@app.post("/section/nutrition/meal-log/add", response_class=HTMLResponse)
+async def add_meal_log(dish_id: str = Form(...), consumed_grams: float = Form(...), date: str = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO meal_log (id, date, dish_id, consumed_grams) VALUES (%s, %s, %s, %s);", (str(uuid.uuid4()), date, dish_id, consumed_grams))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_meal_log_list(date)
+
+@app.get("/section/nutrition/meal-log/edit/{log_id}", response_class=HTMLResponse)
+async def edit_meal_log_form(log_id: str, date: str = Query(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, dish_id, consumed_grams FROM meal_log WHERE id = %s;", (log_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse(f"<tr><td colspan='3'>Запись не найдена</td></tr>")
+    return MEAL_LOG_EDIT_TEMPLATE.format(id=row[0], dish_options=get_dish_options(selected=row[1]), consumed_grams=row[2], date=date)
+
+@app.post("/section/nutrition/meal-log/edit/{log_id}", response_class=HTMLResponse)
+async def edit_meal_log(log_id: str, dish_id: str = Form(...), consumed_grams: float = Form(...), date: str = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE meal_log SET dish_id = %s, consumed_grams = %s WHERE id = %s;", (dish_id, consumed_grams, log_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_meal_log_list(date)
+
+@app.delete("/section/nutrition/meal-log/delete/{log_id}", response_class=HTMLResponse)
+async def delete_meal_log(log_id: str, date: str = Query(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM meal_log WHERE id = %s;", (log_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_meal_log_list(date)
+
 @app.get("/section/nutrition", response_class=HTMLResponse)
 async def section_nutrition():
-    content = render_product_list()
+    content = render_meal_log_list(datetime.now().date().isoformat())
     html = NUTRITION_SECTION_TEMPLATE.format(
-        active_products="active", active_dishes="",
+        active_products="", active_dishes="", active_meal_log="active", active_weight="",
         content=content
     )
     return HTMLResponse(html)
@@ -1244,6 +1380,141 @@ async def delete_dish(dish_id: str):
     conn.close()
     return render_dish_list()
 
+WEIGHT_LIST_TEMPLATE = '''
+<div id="weight-list">
+<h2>Вес</h2>
+<form hx-post="/section/nutrition/weight/add" hx-target="#weight-list" hx-swap="outerHTML" style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center;">
+    <input type="date" name="date" value="{today}" required>
+    <input type="number" step="0.01" name="weight" placeholder="Вес (кг)" required style="width:90px;">
+    <button type="submit">Добавить</button>
+</form>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr><th>Дата</th><th>Вес (кг)</th><th>Действия</th></tr>
+    {rows}
+</table>
+</div>
+'''
+
+WEIGHT_ROW_TEMPLATE = '''
+<tr id="edit-weight-row-{id}">
+    <td>{date}</td>
+    <td>{weight}</td>
+    <td>
+        <button hx-get="/section/nutrition/weight/edit/{id}" hx-target="#edit-weight-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button hx-delete="/section/nutrition/weight/delete/{id}" hx-target="#weight-list" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
+'''
+
+WEIGHT_EDIT_TEMPLATE = '''
+<tr id="edit-weight-row-{id}">
+    <td colspan="3">
+        <form hx-post="/section/nutrition/weight/edit/{id}" hx-target="#weight-list" hx-swap="outerHTML">
+            <input type="date" name="date" value="{date}" required>
+            <input type="number" step="0.01" name="weight" value="{weight}" required style="width:90px;">
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="window.location.reload()">Отмена</button>
+        </form>
+    </td>
+</tr>
+'''
+
+def render_weight_list():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, date, weight FROM personal_data ORDER BY date DESC;")
+    rows = "".join(
+        WEIGHT_ROW_TEMPLATE.format(id=row[0], date=row[1], weight=row[2]) for row in cur.fetchall()
+    )
+    cur.close()
+    conn.close()
+    from datetime import date as dtdate
+    return WEIGHT_LIST_TEMPLATE.format(rows=rows, today=dtdate.today().isoformat())
+
+@app.get("/section/nutrition/weight", response_class=HTMLResponse)
+async def nutrition_weight():
+    return HTMLResponse(render_weight_list())
+
+@app.post("/section/nutrition/weight/add", response_class=HTMLResponse)
+async def add_weight(date: str = Form(...), weight: float = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    import uuid
+    cur.execute("INSERT INTO personal_data (id, date, weight) VALUES (%s, %s, %s);", (str(uuid.uuid4()), date, weight))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_weight_list()
+
+@app.get("/section/nutrition/weight/edit/{weight_id}", response_class=HTMLResponse)
+async def edit_weight_form(weight_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, date, weight FROM personal_data WHERE id = %s;", (weight_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse(f"<tr><td colspan='3'>Запись не найдена</td></tr>")
+    return WEIGHT_EDIT_TEMPLATE.format(id=row[0], date=row[1], weight=row[2])
+
+@app.post("/section/nutrition/weight/edit/{weight_id}", response_class=HTMLResponse)
+async def edit_weight(weight_id: str, date: str = Form(...), weight: float = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE personal_data SET date = %s, weight = %s WHERE id = %s;", (date, weight, weight_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_weight_list()
+
+@app.delete("/section/nutrition/weight/delete/{weight_id}", response_class=HTMLResponse)
+async def delete_weight(weight_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM personal_data WHERE id = %s;", (weight_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_weight_list()
+
+SETTINGS_TEMPLATE = '''
+<div style="max-width:400px;margin:0 auto;">
+    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" id="settings-goal-form" style="display:flex;gap:8px;align-items:center;">
+        <label>Целевые калории в день:
+            <input type="number" name="target_calories" value="{target_calories}" min="0" required style="width:120px;">
+        </label>
+        <button type="submit">Сохранить</button>
+    </form>
+</div>
+'''
+
+def get_calories_goal():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT target_calories FROM calories_goal LIMIT 1;")
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return row[0] if row else 2000
+
 @app.get("/section/sport", response_class=HTMLResponse)
-async def section_sport():
-    return HTMLResponse("<div>Спорт</div>") 
+async def section_settings():
+    target_calories = get_calories_goal()
+    return HTMLResponse(SETTINGS_TEMPLATE.format(target_calories=target_calories))
+
+@app.post("/section/settings/calories-goal", response_class=HTMLResponse)
+async def set_calories_goal(target_calories: int = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM calories_goal LIMIT 1;")
+    row = cur.fetchone()
+    if row:
+        cur.execute("UPDATE calories_goal SET target_calories = %s WHERE id = %s;", (target_calories, row[0]))
+    else:
+        import uuid
+        cur.execute("INSERT INTO calories_goal (id, target_calories) VALUES (%s, %s);", (str(uuid.uuid4()), target_calories))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return SETTINGS_TEMPLATE.format(target_calories=target_calories) 
