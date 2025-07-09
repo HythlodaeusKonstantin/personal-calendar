@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, APIRouter, Form, Query
+from fastapi import FastAPI, Request, APIRouter, Form, Query, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import psycopg2
@@ -6,6 +6,8 @@ import os
 from psycopg2 import sql
 import uuid
 from datetime import date, timedelta, datetime
+import hashlib
+import secrets
 
 app = FastAPI()
 
@@ -26,6 +28,13 @@ DB_CONFIG = {
 }
 
 SCHEMA = {
+    # Пользователи
+    "users": [
+        ("id", "UUID PRIMARY KEY"),
+        ("username", "VARCHAR(255) UNIQUE NOT NULL"),
+        ("password_hash", "VARCHAR(255) NOT NULL"),
+        ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    ],
     # Категории привычек
     "habit_category": [
         ("id", "UUID PRIMARY KEY"),
@@ -119,6 +128,56 @@ def create_enum(cur, name, values):
 def get_db_connection():
     return psycopg2.connect(**DB_CONFIG)
 
+def hash_password(password: str) -> str:
+    """Хеширует пароль с солью"""
+    salt = secrets.token_hex(16)
+    hash_obj = hashlib.sha256()
+    hash_obj.update((password + salt).encode())
+    return salt + hash_obj.hexdigest()
+
+def verify_password(password: str, password_hash: str) -> bool:
+    """Проверяет пароль"""
+    if len(password_hash) < 32:  # Минимальная длина для salt + hash
+        return False
+    salt = password_hash[:32]
+    stored_hash = password_hash[32:]
+    hash_obj = hashlib.sha256()
+    hash_obj.update((password + salt).encode())
+    return stored_hash == hash_obj.hexdigest()
+
+def check_user_exists() -> bool:
+    """Проверяет, есть ли пользователи в БД"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM users;")
+    count = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return count > 0
+
+def get_user_by_username(username: str):
+    """Получает пользователя по логину"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, password_hash FROM users WHERE username = %s;", (username,))
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+    return user
+
+def create_user(username: str, password: str):
+    """Создает нового пользователя"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    password_hash = hash_password(password)
+    cur.execute(
+        "INSERT INTO users (id, username, password_hash) VALUES (%s, %s, %s);",
+        (str(uuid.uuid4()), username, password_hash)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
 def init_db_schema():
     conn = get_db_connection()
     cur = conn.cursor()
@@ -185,19 +244,54 @@ def on_startup():
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    # Проверяем, есть ли пользователи в БД
+    if not check_user_exists():
+        # Если пользователей нет, показываем форму регистрации
+        template = env.get_template("auth/register.html")
+        html_content = template.render()
+        return HTMLResponse(content=html_content)
+    else:
+        # Если пользователи есть, показываем форму входа
+        template = env.get_template("auth/login.html")
+        html_content = template.render()
+        return HTMLResponse(content=html_content)
+
+@app.post("/register", response_class=HTMLResponse)
+async def register(username: str = Form(...), password: str = Form(...)):
+    if check_user_exists():
+        return HTMLResponse("<div class='error' style='color:red;text-align:center;margin-bottom:16px;'>Регистрация уже завершена</div>", status_code=400)
+    if len(username) < 3:
+        return HTMLResponse("<div class='error' style='color:red;text-align:center;margin-bottom:16px;'>Логин должен содержать минимум 3 символа</div>", status_code=400)
+    if len(password) < 6:
+        return HTMLResponse("<div class='error' style='color:red;text-align:center;margin-bottom:16px;'>Пароль должен содержать минимум 6 символов</div>", status_code=400)
+    try:
+        create_user(username, password)
+        # После успешной регистрации показываем форму входа
+        template = env.get_template("auth/login.html")
+        return HTMLResponse(content=template.render())
+    except Exception as e:
+        return HTMLResponse(f"<div class='error' style='color:red;text-align:center;margin-bottom:16px;'>Ошибка при создании пользователя: {str(e)}</div>", status_code=500)
+
+@app.post("/login", response_class=HTMLResponse)
+async def login(username: str = Form(...), password: str = Form(...)):
+    user = get_user_by_username(username)
+    if not user or not verify_password(password, user[2]):
+        return HTMLResponse(
+            "<div class='error' style='color:red;text-align:center;margin-bottom:16px;'>Неверный логин или пароль</div>",
+            status_code=401
+        )
+    # Успешный вход — делаем redirect через htmx
+    return HTMLResponse(headers={"HX-Redirect": "/app"})
+
+@app.get("/app", response_class=HTMLResponse)
+async def app_main(request: Request):
+    # Главная страница приложения (после входа)
     template = env.get_template("index.html")
     html_content = template.render(request=request)
     return HTMLResponse(content=html_content)
 
 @app.get("/events", response_class=HTMLResponse)
 async def get_events(request: Request):
-    # Пример запроса к БД (пока без реальных данных)
-    # conn = get_db_connection()
-    # cur = conn.cursor()
-    # cur.execute("SELECT id, title FROM events LIMIT 10;")
-    # events = cur.fetchall()
-    # cur.close()
-    # conn.close()
     events = [
         {"id": 1, "title": "Встреча с друзьями"},
         {"id": 2, "title": "День рождения"},
