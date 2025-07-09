@@ -1716,9 +1716,9 @@ function setActiveSubTab(tab) {{
 '''
 
 SETTINGS_TEMPLATE = '''
-<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md" id="settings-goal-form">
     <h2 class="text-2xl font-bold mb-4 text-gray-800">Настройки калорий</h2>
-    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" id="settings-goal-form" class="space-y-4">
+    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" class="space-y-4">
         <div>
             <label class="block text-gray-700 text-sm font-bold mb-2" for="target_calories">
                 Целевые калории в день:
@@ -1766,7 +1766,7 @@ async def set_calories_goal(target_calories: int = Form(...)):
     conn.commit()
     cur.close()
     conn.close()
-    return SETTINGS_TEMPLATE.format(target_calories=target_calories)
+    return HTMLResponse(SETTINGS_TEMPLATE.format(target_calories=target_calories))
 
 def create_session(user_id):
     token = secrets.token_hex(32)
