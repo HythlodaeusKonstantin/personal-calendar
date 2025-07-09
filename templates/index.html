@@ -207,15 +207,14 @@
 </head>
 <body class="bg-gray-100">
     <!-- Мобильное меню -->
-    <div class="mobile-menu hidden lg:hidden">
-        <div class="bg-gray-800 text-white p-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold">Календарь</h1>
-            <button id="mobile-menu-btn" class="text-white p-2">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
-            </button>
-        </div>
+    <div class="mobile-menu fixed top-0 left-0 right-0 z-50 bg-gray-800 text-white p-4 flex justify-between items-center shadow hidden lg:hidden">
+        <h1 class="text-xl font-bold">Календарь</h1>
+        <button id="mobile-menu-btn" class="text-white p-2 relative" aria-label="Открыть меню">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <span id="menu-hint" class="absolute left-1/2 -translate-x-1/2 top-12 bg-black bg-opacity-80 text-xs rounded px-2 py-1 whitespace-nowrap" style="display:none;">Меню</span>
+        </button>
     </div>
 
     <!-- Оверлей для мобильного меню -->
@@ -280,6 +279,7 @@
             const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
             const mobileSidebar = document.getElementById('mobile-sidebar');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const menuHint = document.getElementById('menu-hint');
 
             function openMobileMenu() {
                 mobileSidebar.classList.add('active');
@@ -293,9 +293,16 @@
                 document.body.style.overflow = '';
             }
 
-            mobileMenuBtn.addEventListener('click', openMobileMenu);
-            closeMobileMenuBtn.addEventListener('click', closeMobileMenu);
-            sidebarOverlay.addEventListener('click', closeMobileMenu);
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', openMobileMenu);
+                // Подсказка появляется при первом заходе на мобильном
+                if (window.innerWidth < 1024 && menuHint) {
+                    setTimeout(() => { menuHint.style.display = 'block'; }, 800);
+                    setTimeout(() => { menuHint.style.display = 'none'; }, 3500);
+                }
+            }
+            if (closeMobileMenuBtn) closeMobileMenuBtn.addEventListener('click', closeMobileMenu);
+            if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMobileMenu);
 
             // Закрытие меню при клике на пункт меню
             document.addEventListener('click', function(e) {
