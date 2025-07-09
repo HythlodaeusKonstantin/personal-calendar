@@ -217,7 +217,7 @@ HABIT_CATEGORY_LIST_TEMPLATE = '''
     <thead>
         <tr>
             <th class="border border-slate-300 p-2">Название</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 w-auto">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -230,7 +230,7 @@ HABIT_CATEGORY_LIST_TEMPLATE = '''
 HABIT_CATEGORY_ROW_TEMPLATE = '''
 <tr id="edit-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 w-auto">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/category/edit/{id}" hx-target="#edit-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/category/delete/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -315,7 +315,7 @@ async def habits_marks():
     for entry_id, habit_name, completed in cur.fetchall():
         checked = "checked" if completed else ""
         row_class = ' class="bg-green-100"' if completed else ''
-        rows += f'''<tr{row_class}><td class="border border-slate-300 p-2">{habit_name}</td><td class="border border-slate-300 p-2"><input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="#habits-marks-table-area" hx-swap="outerHTML" {checked}></td></tr>'''
+        rows += f'''<tr{row_class}><td class="border border-slate-300 p-2">{habit_name}</td><td class="border border-slate-300 p-2 cursor-pointer" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="#habits-marks-table-area" hx-swap="outerHTML"><input type="checkbox" {checked} class="pointer-events-none"></td></tr>'''
     cur.close()
     conn.close()
     html = f'''
@@ -385,7 +385,7 @@ HABIT_LIST_TEMPLATE = '''
             <th class="border border-slate-300 p-2">Описание</th>
             <th class="border border-slate-300 p-2">Категория</th>
             <th class="border border-slate-300 p-2">Приоритет</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 w-auto">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -401,7 +401,7 @@ HABIT_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{description}</td>
     <td class="border border-slate-300 p-2">{category}</td>
     <td class="border border-slate-300 p-2">{priority}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 w-auto">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/habits/edit/{id}" hx-target="#edit-habit-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/habits/delete/{id}" hx-target="#habit-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -600,7 +600,7 @@ TASK_CATEGORY_LIST_TEMPLATE = '''
     <thead>
         <tr>
             <th class="border border-slate-300 p-2">Название</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 w-auto">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -613,7 +613,7 @@ TASK_CATEGORY_LIST_TEMPLATE = '''
 TASK_CATEGORY_ROW_TEMPLATE = '''
 <tr id="edit-task-category-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 w-auto">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/categories/edit/{id}" hx-target="#edit-task-category-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/categories/delete/{id}" hx-target="#task-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -716,7 +716,7 @@ TASK_LIST_TEMPLATE = '''
             <th class="border border-slate-300 p-2">Категория</th>
             <th class="border border-slate-300 p-2">Дата</th>
             <th class="border border-slate-300 p-2">Повтор</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 w-auto">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -733,7 +733,7 @@ TASK_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{category}</td>
     <td class="border border-slate-300 p-2">{date}</td>
     <td class="border border-slate-300 p-2">{repeat}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 w-auto">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/tasks/edit/{id}" hx-target="#edit-task-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/tasks/delete/{id}" hx-target="#task-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -926,7 +926,7 @@ async def tasks_marks(show_completed: str = "0"):
         row_class = ' class="bg-green-100"' if completed else (' class="bg-red-100"' if is_overdue else '')
         delete_btn = f'<button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/marks/delete/{entry_id}" hx-target="closest tr" hx-swap="outerHTML">🗑️</button>' if show_completed == "1" else ""
         last_col = f'<td class="border border-slate-300 p-2">{delete_btn}</td>' if show_completed == "1" else ""
-        rows += f'''<tr{row_class}><td class="border border-slate-300 p-2">{name}</td><td class="border border-slate-300 p-2">{description or ''}</td><td class="border border-slate-300 p-2">{task_date}</td><td class="border border-slate-300 p-2">{repeat}</td><td class="border border-slate-300 p-2">{entry_date}</td><td class="border border-slate-300 p-2"><input type="checkbox" hx-post="/section/tasks/marks/toggle/{entry_id}" hx-target="#tasks-marks-table-area" hx-swap="outerHTML" {checked}></td>{last_col}</tr>'''
+        rows += f'''<tr{row_class}><td class="border border-slate-300 p-2">{name}</td><td class="border border-slate-300 p-2">{description or ''}</td><td class="border border-slate-300 p-2">{task_date}</td><td class="border border-slate-300 p-2">{repeat}</td><td class="border border-slate-300 p-2">{entry_date}</td><td class="border border-slate-300 p-2 cursor-pointer" hx-post="/section/tasks/marks/toggle/{entry_id}" hx-target="#tasks-marks-table-area" hx-swap="outerHTML"><input type="checkbox" {checked} class="pointer-events-none"></td>{last_col}</tr>'''
     cur.close()
     conn.close()
     checked_flag = "checked" if show_completed == "1" else ""
@@ -1029,7 +1029,7 @@ MEAL_LOG_LIST_TEMPLATE = '''
         <tr>
             <th class="border border-slate-300 p-2">Блюдо</th>
             <th class="border border-slate-300 p-2">Граммы</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 w-auto">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -1043,7 +1043,7 @@ MEAL_LOG_ROW_TEMPLATE = '''
 <tr id="edit-meal-log-row-{id}">
     <td class="border border-slate-300 p-2">{dish_name}</td>
     <td class="border border-slate-300 p-2">{consumed_grams}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 w-auto">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#edit-meal-log-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/meal-log/delete/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -1199,7 +1199,7 @@ PRODUCT_LIST_TEMPLATE = '''
             <th class="border border-slate-300 p-2">Название</th>
             <th class="border border-slate-300 p-2">Ккал/100г</th>
             <th class="border border-slate-300 p-2">Микроэлементы</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 w-auto">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -1214,7 +1214,7 @@ PRODUCT_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{name}</td>
     <td class="border border-slate-300 p-2">{calories_per_100g}</td>
     <td class="border border-slate-300 p-2">{micro_description}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 w-auto">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/products/edit/{id}" hx-target="#edit-product-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/products/delete/{id}" hx-target="#product-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -1306,7 +1306,7 @@ DISH_LIST_TEMPLATE = '''
         <tr>
             <th class="border border-slate-300 p-2">Название</th>
             <th class="border border-slate-300 p-2">Описание</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 w-auto">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -1320,7 +1320,7 @@ DISH_ROW_TEMPLATE = '''
 <tr id="edit-dish-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
     <td class="border border-slate-300 p-2">{description}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 w-auto">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/dishes/edit/{id}" hx-target="#edit-dish-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/dishes/ingredients/{id}" hx-target="#ingredients-row-{id}" hx-swap="outerHTML">Ингредиенты</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/delete/{id}" hx-target="#dish-list" hx-swap="outerHTML">🗑️</button>
@@ -1347,7 +1347,7 @@ DISH_INGREDIENTS_TEMPLATE = '''
                 <tr>
                     <th class="border border-slate-300 p-2">Продукт</th>
                     <th class="border border-slate-300 p-2">Граммы</th>
-                    <th class="border border-slate-300 p-2"></th>
+                    <th class="border border-slate-300 p-2 w-auto"></th>
                 </tr>
             </thead>
             <tbody>
@@ -1362,7 +1362,7 @@ DISH_INGREDIENT_ROW_TEMPLATE = '''
 <tr>
     <td class="border border-slate-300 p-2">{product_name}</td>
     <td class="border border-slate-300 p-2">{grams}</td>
-    <td class="border border-slate-300 p-2"><button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/ingredients/delete/{ingredient_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML">🗑️</button></td>
+    <td class="border border-slate-300 p-2 w-auto"><button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/ingredients/delete/{ingredient_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML">🗑️</button></td>
 </tr>
 '''
 
