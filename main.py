@@ -208,35 +208,42 @@ async def get_events(request: Request):
 # HTML-шаблоны для habit_category
 HABIT_CATEGORY_LIST_TEMPLATE = '''
 <div id="habit-category-list">
-<h2>Категории привычек</h2>
-<form hx-post="/section/habits/category/add" hx-target="#habit-category-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
-    <input type="text" name="name" placeholder="Название категории" required>
-    <button type="submit">Добавить</button>
+<h2 class="text-2xl font-bold mb-4">Категории привычек</h2>
+<form hx-post="/section/habits/category/add" hx-target="#habit-category-list" hx-swap="outerHTML" class="mb-4">
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название категории" required>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Название</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Название</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 HABIT_CATEGORY_ROW_TEMPLATE = '''
 <tr id="edit-row-{id}">
-    <td>{name}</td>
-    <td>
-        <button hx-get="/section/habits/category/edit/{id}" hx-target="#edit-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-delete="/section/habits/category/delete/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{name}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/category/edit/{id}" hx-target="#edit-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/category/delete/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
 
 HABIT_CATEGORY_EDIT_TEMPLATE = '''
 <tr id="edit-row-{id}">
-    <td colspan="2">
+    <td colspan="2" class="p-2">
         <form hx-post="/section/habits/category/edit/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">
-            <input type="text" name="name" value="{name}" required>
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
         </form>
     </td>
 </tr>
@@ -255,12 +262,12 @@ def render_habit_category_list():
 
 HABITS_SECTION_TEMPLATE = '''
 <div>
-    <div class="tabs" style="margin-bottom: 0;">
-        <button class="tab {active_marks}" id="tab-habit-marks" hx-get="/section/habits/marks" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
-        <button class="tab {active_categories}" id="tab-habit-categories" hx-get="/section/habits/categories" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
-        <button class="tab {active_habits}" id="tab-habit-habits" hx-get="/section/habits/habits" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки привычек</button>
+    <div class="flex border-b">
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_marks}" id="tab-habit-marks" hx-get="/section/habits/marks" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_categories}" id="tab-habit-categories" hx-get="/section/habits/categories" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_habits}" id="tab-habit-habits" hx-get="/section/habits/habits" hx-target="#habits-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки привычек</button>
     </div>
-    <div id="habits-subsection" class="tab-content" style="margin-top:0;">{content}</div>
+    <div id="habits-subsection" class="p-4">{content}</div>
 </div>
 <script>
 function setActiveSubTab(tab) {{
@@ -307,16 +314,23 @@ async def habits_marks():
     rows = ""
     for entry_id, habit_name, completed in cur.fetchall():
         checked = "checked" if completed else ""
-        row_style = ' style="background: #d4edda;"' if completed else ''
-        rows += f'''<tr{row_style}><td>{habit_name}</td><td><input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="#habits-marks-table-area" hx-swap="outerHTML" {checked}></td></tr>'''
+        row_class = ' class="bg-green-100"' if completed else ''
+        rows += f'''<tr{row_class}><td class="border border-slate-300 p-2">{habit_name}</td><td class="border border-slate-300 p-2"><input type="checkbox" hx-post="/section/habits/marks/toggle/{entry_id}" hx-target="#habits-marks-table-area" hx-swap="outerHTML" {checked}></td></tr>'''
     cur.close()
     conn.close()
     html = f'''
     <div id="habits-marks-table-area">
-        <h2>Отметки за {today.strftime('%d.%m.%Y')}</h2>
-        <table id="habits-marks-table" border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-            <tr><th>Привычка</th><th>Выполнено</th></tr>
+        <h2 class="text-2xl font-bold mb-4">Отметки за {today.strftime('%d.%m.%Y')}</h2>
+        <table id="habits-marks-table" class="table-auto w-full border-collapse border border-slate-400">
+            <thead>
+                <tr>
+                    <th class="border border-slate-300 p-2">Привычка</th>
+                    <th class="border border-slate-300 p-2">Выполнено</th>
+                </tr>
+            </thead>
+            <tbody>
             {rows}
+            </tbody>
         </table>
     </div>
     '''
@@ -349,57 +363,67 @@ async def habits_categories():
 # --- Карточки привычек (habit) ---
 HABIT_LIST_TEMPLATE = '''
 <div id="habit-list">
-<h2>Карточки привычек</h2>
-<form hx-post="/section/habits/habits/add" hx-target="#habit-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
-    <input type="text" name="name" placeholder="Название привычки" required>
-    <input type="text" name="description" placeholder="Описание">
-    <select name="category_id" required>
+<h2 class="text-2xl font-bold mb-4">Карточки привычек</h2>
+<form hx-post="/section/habits/habits/add" hx-target="#habit-list" hx-swap="outerHTML" class="mb-4">
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название привычки" required>
+    <input class="border p-2 rounded w-full mb-2" type="text" name="description" placeholder="Описание">
+    <select class="border p-2 rounded w-full mb-2" name="category_id" required>
         <option value="">Категория...</option>
         {category_options}
     </select>
-    <select name="priority" required>
+    <select class="border p-2 rounded w-full mb-2" name="priority" required>
         <option value="HIGH">Высокий</option>
         <option value="MEDIUM">Средний</option>
         <option value="LOW">Низкий</option>
     </select>
-    <button type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Название</th><th>Описание</th><th>Категория</th><th>Приоритет</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Название</th>
+            <th class="border border-slate-300 p-2">Описание</th>
+            <th class="border border-slate-300 p-2">Категория</th>
+            <th class="border border-slate-300 p-2">Приоритет</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 HABIT_ROW_TEMPLATE = '''
 <tr id="edit-habit-row-{id}">
-    <td>{name}</td>
-    <td>{description}</td>
-    <td>{category}</td>
-    <td>{priority}</td>
-    <td>
-        <button hx-get="/section/habits/habits/edit/{id}" hx-target="#edit-habit-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-delete="/section/habits/habits/delete/{id}" hx-target="#habit-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{name}</td>
+    <td class="border border-slate-300 p-2">{description}</td>
+    <td class="border border-slate-300 p-2">{category}</td>
+    <td class="border border-slate-300 p-2">{priority}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/habits/edit/{id}" hx-target="#edit-habit-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/habits/delete/{id}" hx-target="#habit-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
 
 HABIT_EDIT_TEMPLATE = '''
 <tr id="edit-habit-row-{id}">
-    <td colspan="5">
+    <td colspan="5" class="p-2">
         <form hx-post="/section/habits/habits/edit/{id}" hx-target="#habit-list" hx-swap="outerHTML">
-            <input type="text" name="name" value="{name}" required>
-            <input type="text" name="description" value="{description}">
-            <select name="category_id" required>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
+            <select class="border p-2 rounded w-full mb-2" name="category_id" required>
                 {category_options}
             </select>
-            <select name="priority" required>
+            <select class="border p-2 rounded w-full mb-2" name="priority" required>
                 <option value="HIGH" {high}>Высокий</option>
                 <option value="MEDIUM" {medium}>Средний</option>
                 <option value="LOW" {low}>Низкий</option>
             </select>
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
         </form>
     </td>
 </tr>
@@ -540,12 +564,12 @@ async def delete_habit_category(cat_id: str):
 # --- Раздел Задачи ---
 TASKS_SECTION_TEMPLATE = '''
 <div>
-    <div class="tabs" style="margin-bottom: 0;">
-        <button class="tab {active_marks}" id="tab-task-marks" hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
-        <button class="tab {active_categories}" id="tab-task-categories" hx-get="/section/tasks/categories" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
-        <button class="tab {active_tasks}" id="tab-task-tasks" hx-get="/section/tasks/tasks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки задач</button>
+    <div class="flex border-b">
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_marks}" id="tab-task-marks" hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Отметки</button>
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_categories}" id="tab-task-categories" hx-get="/section/tasks/categories" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Категории</button>
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_tasks}" id="tab-task-tasks" hx-get="/section/tasks/tasks" hx-target="#tasks-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Карточки задач</button>
     </div>
-    <div id="tasks-subsection" class="tab-content" style="margin-top:0;">{content}</div>
+    <div id="tasks-subsection" class="p-4">{content}</div>
 </div>
 <script>
 function setActiveSubTab(tab) {{
@@ -567,35 +591,42 @@ async def section_tasks():
 # --- Категории задач ---
 TASK_CATEGORY_LIST_TEMPLATE = '''
 <div id="task-category-list">
-<h2>Категории задач</h2>
-<form hx-post="/section/tasks/categories/add" hx-target="#task-category-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
-    <input type="text" name="name" placeholder="Название категории" required>
-    <button type="submit">Добавить</button>
+<h2 class="text-2xl font-bold mb-4">Категории задач</h2>
+<form hx-post="/section/tasks/categories/add" hx-target="#task-category-list" hx-swap="outerHTML" class="mb-4">
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название категории" required>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Название</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Название</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 TASK_CATEGORY_ROW_TEMPLATE = '''
 <tr id="edit-task-category-row-{id}">
-    <td>{name}</td>
-    <td>
-        <button hx-get="/section/tasks/categories/edit/{id}" hx-target="#edit-task-category-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-delete="/section/tasks/categories/delete/{id}" hx-target="#task-category-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{name}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/categories/edit/{id}" hx-target="#edit-task-category-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/categories/delete/{id}" hx-target="#task-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
 
 TASK_CATEGORY_EDIT_TEMPLATE = '''
 <tr id="edit-task-category-row-{id}">
-    <td colspan="2">
+    <td colspan="2" class="p-2">
         <form hx-post="/section/tasks/categories/edit/{id}" hx-target="#task-category-list" hx-swap="outerHTML">
-            <input type="text" name="name" value="{name}" required>
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
         </form>
     </td>
 </tr>
@@ -661,60 +692,71 @@ async def delete_task_category(cat_id: str):
 # --- Карточки задач ---
 TASK_LIST_TEMPLATE = '''
 <div id="task-list">
-<h2>Карточки задач</h2>
-<form hx-post="/section/tasks/tasks/add" hx-target="#task-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
-    <input type="text" name="name" placeholder="Название задачи" required>
-    <input type="text" name="description" placeholder="Описание">
-    <select name="category_id" required>
+<h2 class="text-2xl font-bold mb-4">Карточки задач</h2>
+<form hx-post="/section/tasks/tasks/add" hx-target="#task-list" hx-swap="outerHTML" class="mb-4">
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название задачи" required>
+    <input class="border p-2 rounded w-full mb-2" type="text" name="description" placeholder="Описание">
+    <select class="border p-2 rounded w-full mb-2" name="category_id" required>
         <option value="">Категория...</option>
         {category_options}
     </select>
-    <input type="date" name="date" required>
-    <select name="repeat" required>
+    <input class="border p-2 rounded w-full mb-2" type="date" name="date" required>
+    <select class="border p-2 rounded w-full mb-2" name="repeat" required>
         <option value="NONE">Без повтора</option>
         <option value="DAILY">Ежедневно</option>
         <option value="WEEKLY">Еженедельно</option>
     </select>
-    <button type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Название</th><th>Описание</th><th>Категория</th><th>Дата</th><th>Повтор</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Название</th>
+            <th class="border border-slate-300 p-2">Описание</th>
+            <th class="border border-slate-300 p-2">Категория</th>
+            <th class="border border-slate-300 p-2">Дата</th>
+            <th class="border border-slate-300 p-2">Повтор</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 TASK_ROW_TEMPLATE = '''
 <tr id="edit-task-row-{id}">
-    <td>{name}</td>
-    <td>{description}</td>
-    <td>{category}</td>
-    <td>{date}</td>
-    <td>{repeat}</td>
-    <td>
-        <button hx-get="/section/tasks/tasks/edit/{id}" hx-target="#edit-task-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-delete="/section/tasks/tasks/delete/{id}" hx-target="#task-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{name}</td>
+    <td class="border border-slate-300 p-2">{description}</td>
+    <td class="border border-slate-300 p-2">{category}</td>
+    <td class="border border-slate-300 p-2">{date}</td>
+    <td class="border border-slate-300 p-2">{repeat}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/tasks/edit/{id}" hx-target="#edit-task-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/tasks/delete/{id}" hx-target="#task-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
 
 TASK_EDIT_TEMPLATE = '''
 <tr id="edit-task-row-{id}">
-    <td colspan="6">
+    <td colspan="6" class="p-2">
         <form hx-post="/section/tasks/tasks/edit/{id}" hx-target="#task-list" hx-swap="outerHTML">
-            <input type="text" name="name" value="{name}" required>
-            <input type="text" name="description" value="{description}">
-            <select name="category_id" required>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
+            <select class="border p-2 rounded w-full mb-2" name="category_id" required>
                 {category_options}
             </select>
-            <input type="date" name="date" value="{date}" required>
-            <select name="repeat" required>
+            <input class="border p-2 rounded w-full mb-2" type="date" name="date" value="{date}" required>
+            <select class="border p-2 rounded w-full mb-2" name="repeat" required>
                 <option value="NONE" {none}>Без повтора</option>
                 <option value="DAILY" {daily}>Ежедневно</option>
                 <option value="WEEKLY" {weekly}>Еженедельно</option>
             </select>
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
         </form>
     </td>
 </tr>
@@ -881,10 +923,10 @@ async def tasks_marks(show_completed: str = "0"):
     for entry_id, name, description, task_date, repeat, entry_date, completed in cur.fetchall():
         checked = "checked" if completed else ""
         is_overdue = not completed and entry_date < today
-        row_style = ' style="background: #d4edda;"' if completed else (' style="background: #f8d7da;"' if is_overdue else '')
-        delete_btn = f'<button hx-delete="/section/tasks/marks/delete/{entry_id}" hx-target="closest tr" hx-swap="outerHTML">🗑️</button>' if show_completed == "1" else ""
-        last_col = f'<td>{delete_btn}</td>' if show_completed == "1" else ""
-        rows += f'''<tr{row_style}><td>{name}</td><td>{description or ''}</td><td>{task_date}</td><td>{repeat}</td><td>{entry_date}</td><td><input type="checkbox" hx-post="/section/tasks/marks/toggle/{entry_id}" hx-target="#tasks-marks-table-area" hx-swap="outerHTML" {checked}></td>{last_col}</tr>'''
+        row_class = ' class="bg-green-100"' if completed else (' class="bg-red-100"' if is_overdue else '')
+        delete_btn = f'<button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/marks/delete/{entry_id}" hx-target="closest tr" hx-swap="outerHTML">🗑️</button>' if show_completed == "1" else ""
+        last_col = f'<td class="border border-slate-300 p-2">{delete_btn}</td>' if show_completed == "1" else ""
+        rows += f'''<tr{row_class}><td class="border border-slate-300 p-2">{name}</td><td class="border border-slate-300 p-2">{description or ''}</td><td class="border border-slate-300 p-2">{task_date}</td><td class="border border-slate-300 p-2">{repeat}</td><td class="border border-slate-300 p-2">{entry_date}</td><td class="border border-slate-300 p-2"><input type="checkbox" hx-post="/section/tasks/marks/toggle/{entry_id}" hx-target="#tasks-marks-table-area" hx-swap="outerHTML" {checked}></td>{last_col}</tr>'''
     cur.close()
     conn.close()
     checked_flag = "checked" if show_completed == "1" else ""
@@ -892,11 +934,26 @@ async def tasks_marks(show_completed: str = "0"):
     th_delete = '<th></th>' if show_completed == "1" else ''
     html = f'''
     <div id="tasks-marks-table-area">
-        <h2>Задачи</h2>
-        <label><input type="checkbox" id="show-completed-tasks" {checked_flag} hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" hx-vals='{{"show_completed": "{1 if show_completed == "0" else 0}"}}'> Показывать выполненные задачи</label>
-        <table id="tasks-marks-table" border="1" cellpadding="8" style="border-collapse: collapse; width: {table_width};">
-            <tr><th>Название</th><th>Описание</th><th>Дата задачи</th><th>Повтор</th><th>Дата отметки</th><th>Выполнено</th>{th_delete}</tr>
+        <h2 class="text-2xl font-bold mb-4">Задачи</h2>
+        <label class="inline-flex items-center mb-4">
+            <input type="checkbox" id="show-completed-tasks" {checked_flag} hx-get="/section/tasks/marks" hx-target="#tasks-subsection" hx-swap="innerHTML" hx-vals='{{"show_completed": "{1 if show_completed == "0" else 0}"}}' class="form-checkbox h-5 w-5 text-blue-600">
+            <span class="ml-2 text-gray-700">Показывать выполненные задачи</span>
+        </label>
+        <table id="tasks-marks-table" class="table-auto w-full border-collapse border border-slate-400">
+            <thead>
+                <tr>
+                    <th class="border border-slate-300 p-2">Название</th>
+                    <th class="border border-slate-300 p-2">Описание</th>
+                    <th class="border border-slate-300 p-2">Дата задачи</th>
+                    <th class="border border-slate-300 p-2">Повтор</th>
+                    <th class="border border-slate-300 p-2">Дата отметки</th>
+                    <th class="border border-slate-300 p-2">Выполнено</th>
+                    {th_delete}
+                </tr>
+            </thead>
+            <tbody>
             {rows}
+            </tbody>
         </table>
     </div>
     '''
@@ -933,13 +990,13 @@ async def delete_task_entry(entry_id: str):
 # --- Раздел Питание ---
 NUTRITION_SECTION_TEMPLATE = '''
 <div>
-    <div class="tabs" style="margin-bottom: 0;">
-        <button class="tab {active_meal_log}" id="tab-nutrition-meal-log" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Приемы пищи</button>
-        <button class="tab {active_products}" id="tab-nutrition-products" hx-get="/section/nutrition/products" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Продукты</button>
-        <button class="tab {active_dishes}" id="tab-nutrition-dishes" hx-get="/section/nutrition/dishes" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Блюда</button>
-        <button class="tab {active_weight}" id="tab-nutrition-weight" hx-get="/section/nutrition/weight" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Вес</button>
+    <div class="flex border-b">
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_meal_log}" id="tab-nutrition-meal-log" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Приемы пищи</button>
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_products}" id="tab-nutrition-products" hx-get="/section/nutrition/products" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Продукты</button>
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_dishes}" id="tab-nutrition-dishes" hx-get="/section/nutrition/dishes" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Блюда</button>
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 {active_weight}" id="tab-nutrition-weight" hx-get="/section/nutrition/weight" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Вес</button>
     </div>
-    <div id="nutrition-subsection" class="tab-content" style="margin-top:0;">{content}</div>
+    <div id="nutrition-subsection" class="p-4">{content}</div>
 </div>
 <script>
 function setActiveSubTab(tab) {{
@@ -954,48 +1011,56 @@ from datetime import datetime
 
 MEAL_LOG_LIST_TEMPLATE = '''
 <div id="meal-log-list">
-<h2>Приемы пищи</h2>
-<form id="meal-log-date-form" style="margin-bottom: 16px;">
-    <label>Дата: <input type="date" name="date" value="{date}" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML"></label>
+<h2 class="text-2xl font-bold mb-4">Приемы пищи</h2>
+<form id="meal-log-date-form" class="mb-4">
+    <label>Дата: <input class="border p-2 rounded" type="date" name="date" value="{date}" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML"></label>
 </form>
-<form hx-post="/section/nutrition/meal-log/add" hx-target="#meal-log-list" hx-swap="outerHTML" style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center;">
-    <select name="dish_id" required>
+<form hx-post="/section/nutrition/meal-log/add" hx-target="#meal-log-list" hx-swap="outerHTML" class="mb-4 flex gap-2 items-center">
+    <select class="border p-2 rounded" name="dish_id" required>
         <option value="">Блюдо...</option>
         {dish_options}
     </select>
-    <input type="number" step="0.01" name="consumed_grams" placeholder="Граммы" required style="width:90px;">
+    <input class="border p-2 rounded w-24" type="number" step="0.01" name="consumed_grams" placeholder="Граммы" required>
     <input type="hidden" name="date" value="{date}">
-    <button type="submit">Добавить</button>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Блюдо</th><th>Граммы</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Блюдо</th>
+            <th class="border border-slate-300 p-2">Граммы</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 MEAL_LOG_ROW_TEMPLATE = '''
 <tr id="edit-meal-log-row-{id}">
-    <td>{dish_name}</td>
-    <td>{consumed_grams}</td>
-    <td>
-        <button hx-get="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#edit-meal-log-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-delete="/section/nutrition/meal-log/delete/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{dish_name}</td>
+    <td class="border border-slate-300 p-2">{consumed_grams}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#edit-meal-log-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/meal-log/delete/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
 
 MEAL_LOG_EDIT_TEMPLATE = '''
 <tr id="edit-meal-log-row-{id}">
-    <td colspan="3">
+    <td colspan="3" class="p-2">
         <form hx-post="/section/nutrition/meal-log/edit/{id}" hx-target="#meal-log-list" hx-swap="outerHTML">
-            <select name="dish_id" required>
+            <select class="border p-2 rounded" name="dish_id" required>
                 {dish_options}
             </select>
-            <input type="number" step="0.01" name="consumed_grams" value="{consumed_grams}" required style="width:90px;">
+            <input class="border p-2 rounded w-24" type="number" step="0.01" name="consumed_grams" value="{consumed_grams}" required>
             <input type="hidden" name="date" value="{date}">
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
         </form>
     </td>
 </tr>
@@ -1049,14 +1114,14 @@ def render_meal_log_list(date_str):
         total_calories += dish_calories_per_gram * consumed_grams
     # Получаем целевое значение
     target_calories = get_calories_goal()
-    calories_block = f'<div style="margin-bottom:12px;"><b>Количество калорий:</b> {int(total_calories)}</div>'
+    calories_block = f'<div class="mb-3"><b>Количество калорий:</b> {int(total_calories)}</div>'
     if total_calories < target_calories:
         diff = int(target_calories - total_calories)
-        calories_block = f'<div style="margin-bottom:8px;"><b>Количество калорий:</b> {int(total_calories)}</div>' \
-                        f'<div style="color:#d35400;margin-bottom:12px;">До целевого веса: {diff}</div>'
+        calories_block = f'<div class="mb-2"><b>Количество калорий:</b> {int(total_calories)}</div>' \
+                        f'<div class="text-orange-600 mb-3">До целевого веса: {diff}</div>'
     else:
-        calories_block = f'<div style="margin-bottom:8px;"><b>Количество калорий:</b> {int(total_calories)}</div>' \
-                        f'<div style="color:green;font-weight:bold;margin-bottom:12px;">Цель по калориям выполнена</div>'
+        calories_block = f'<div class="mb-2"><b>Количество калорий:</b> {int(total_calories)}</div>' \
+                        f'<div class="text-green-600 font-bold mb-3">Цель по калориям выполнена</div>'
     cur.close()
     conn.close()
     return MEAL_LOG_LIST_TEMPLATE.format(rows=rows, dish_options=get_dish_options(), date=date_str).replace('<table', calories_block + '<table', 1)
@@ -1121,41 +1186,50 @@ async def section_nutrition():
 # --- Продукты ---
 PRODUCT_LIST_TEMPLATE = '''
 <div id="product-list">
-<h2>Продукты</h2>
-<form hx-post="/section/nutrition/products/add" hx-target="#product-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
-    <input type="text" name="name" placeholder="Название" required>
-    <input type="number" step="0.01" name="calories_per_100g" placeholder="Ккал на 100г" required>
-    <input type="text" name="micro_description" placeholder="Микроэлементы">
-    <button type="submit">Добавить</button>
+<h2 class="text-2xl font-bold mb-4">Продукты</h2>
+<form hx-post="/section/nutrition/products/add" hx-target="#product-list" hx-swap="outerHTML" class="mb-4">
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название" required>
+    <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="calories_per_100g" placeholder="Ккал на 100г" required>
+    <input class="border p-2 rounded w-full mb-2" type="text" name="micro_description" placeholder="Микроэлементы">
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Название</th><th>Ккал/100г</th><th>Микроэлементы</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Название</th>
+            <th class="border border-slate-300 p-2">Ккал/100г</th>
+            <th class="border border-slate-300 p-2">Микроэлементы</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 PRODUCT_ROW_TEMPLATE = '''
 <tr id="edit-product-row-{id}">
-    <td>{name}</td>
-    <td>{calories_per_100g}</td>
-    <td>{micro_description}</td>
-    <td>
-        <button hx-get="/section/nutrition/products/edit/{id}" hx-target="#edit-product-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-delete="/section/nutrition/products/delete/{id}" hx-target="#product-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{name}</td>
+    <td class="border border-slate-300 p-2">{calories_per_100g}</td>
+    <td class="border border-slate-300 p-2">{micro_description}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/products/edit/{id}" hx-target="#edit-product-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/products/delete/{id}" hx-target="#product-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
 
 PRODUCT_EDIT_TEMPLATE = '''
 <tr id="edit-product-row-{id}">
-    <td colspan="4">
+    <td colspan="4" class="p-2">
         <form hx-post="/section/nutrition/products/edit/{id}" hx-target="#product-list" hx-swap="outerHTML">
-            <input type="text" name="name" value="{name}" required>
-            <input type="number" step="0.01" name="calories_per_100g" value="{calories_per_100g}" required>
-            <input type="text" name="micro_description" value="{micro_description}">
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
+            <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="calories_per_100g" value="{calories_per_100g}" required>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="micro_description" value="{micro_description}">
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
         </form>
     </td>
 </tr>
@@ -1221,27 +1295,35 @@ async def delete_product(product_id: str):
 # --- Блюда ---
 DISH_LIST_TEMPLATE = '''
 <div id="dish-list">
-<h2>Блюда</h2>
-<form hx-post="/section/nutrition/dishes/add" hx-target="#dish-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
-    <input type="text" name="name" placeholder="Название" required>
-    <input type="text" name="description" placeholder="Описание">
-    <button type="submit">Добавить</button>
+<h2 class="text-2xl font-bold mb-4">Блюда</h2>
+<form hx-post="/section/nutrition/dishes/add" hx-target="#dish-list" hx-swap="outerHTML" class="mb-4">
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название" required>
+    <input class="border p-2 rounded w-full mb-2" type="text" name="description" placeholder="Описание">
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Название</th><th>Описание</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Название</th>
+            <th class="border border-slate-300 p-2">Описание</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 DISH_ROW_TEMPLATE = '''
 <tr id="edit-dish-row-{id}">
-    <td>{name}</td>
-    <td>{description}</td>
-    <td>
-        <button hx-get="/section/nutrition/dishes/edit/{id}" hx-target="#edit-dish-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-get="/section/nutrition/dishes/ingredients/{id}" hx-target="#ingredients-row-{id}" hx-swap="outerHTML">Ингредиенты</button>
-        <button hx-delete="/section/nutrition/dishes/delete/{id}" hx-target="#dish-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{name}</td>
+    <td class="border border-slate-300 p-2">{description}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/dishes/edit/{id}" hx-target="#edit-dish-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/dishes/ingredients/{id}" hx-target="#ingredients-row-{id}" hx-swap="outerHTML">Ингредиенты</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/delete/{id}" hx-target="#dish-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 <tr id="ingredients-row-{id}"></tr>
@@ -1249,20 +1331,28 @@ DISH_ROW_TEMPLATE = '''
 
 # Шаблон для ингредиентов блюда
 DISH_INGREDIENTS_TEMPLATE = '''
-<td colspan="3">
-    <div style="background:#f9f9f9; padding:12px; border-radius:8px;">
-        <b>Ингредиенты:</b>
-        <form hx-post="/section/nutrition/dishes/ingredients/add/{dish_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML" style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
-            <select name="product_id" required>
+<td colspan="3" class="p-2">
+    <div class="bg-gray-100 p-3 rounded-lg">
+        <b class="font-bold">Ингредиенты:</b>
+        <form hx-post="/section/nutrition/dishes/ingredients/add/{dish_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML" class="my-2 flex gap-2 items-center">
+            <select class="border p-2 rounded" name="product_id" required>
                 <option value="">Продукт...</option>
                 {product_options}
             </select>
-            <input type="number" step="0.01" name="grams" placeholder="Граммы" required style="width:90px;">
-            <button type="submit">Добавить</button>
+            <input class="border p-2 rounded w-24" type="number" step="0.01" name="grams" placeholder="Граммы" required>
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
         </form>
-        <table border="1" cellpadding="6" style="border-collapse:collapse; width:100%;">
-            <tr><th>Продукт</th><th>Граммы</th><th></th></tr>
+        <table class="table-auto w-full border-collapse border border-slate-400">
+            <thead>
+                <tr>
+                    <th class="border border-slate-300 p-2">Продукт</th>
+                    <th class="border border-slate-300 p-2">Граммы</th>
+                    <th class="border border-slate-300 p-2"></th>
+                </tr>
+            </thead>
+            <tbody>
             {rows}
+            </tbody>
         </table>
     </div>
 </td>
@@ -1270,9 +1360,9 @@ DISH_INGREDIENTS_TEMPLATE = '''
 
 DISH_INGREDIENT_ROW_TEMPLATE = '''
 <tr>
-    <td>{product_name}</td>
-    <td>{grams}</td>
-    <td><button hx-delete="/section/nutrition/dishes/ingredients/delete/{ingredient_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML">🗑️</button></td>
+    <td class="border border-slate-300 p-2">{product_name}</td>
+    <td class="border border-slate-300 p-2">{grams}</td>
+    <td class="border border-slate-300 p-2"><button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/ingredients/delete/{ingredient_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML">🗑️</button></td>
 </tr>
 '''
 
@@ -1344,12 +1434,12 @@ async def delete_dish_ingredient(ingredient_id: str):
 
 DISH_EDIT_TEMPLATE = '''
 <tr id="edit-dish-row-{id}">
-    <td colspan="3">
+    <td colspan="3" class="p-2">
         <form hx-post="/section/nutrition/dishes/edit/{id}" hx-target="#dish-list" hx-swap="outerHTML">
-            <input type="text" name="name" value="{name}" required>
-            <input type="text" name="description" value="{description}">
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
+            <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
         </form>
     </td>
 </tr>
@@ -1414,38 +1504,46 @@ async def delete_dish(dish_id: str):
 
 WEIGHT_LIST_TEMPLATE = '''
 <div id="weight-list">
-<h2>Вес</h2>
-<form hx-post="/section/nutrition/weight/add" hx-target="#weight-list" hx-swap="outerHTML" style="margin-bottom: 16px; display: flex; gap: 8px; align-items: center;">
-    <input type="date" name="date" value="{today}" required>
-    <input type="number" step="0.01" name="weight" placeholder="Вес (кг)" required style="width:90px;">
-    <button type="submit">Добавить</button>
+<h2 class="text-2xl font-bold mb-4">Вес</h2>
+<form hx-post="/section/nutrition/weight/add" hx-target="#weight-list" hx-swap="outerHTML" class="mb-4 flex gap-2 items-center">
+    <input class="border p-2 rounded" type="date" name="date" value="{today}" required>
+    <input class="border p-2 rounded w-24" type="number" step="0.01" name="weight" placeholder="Вес (кг)" required>
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
-<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
-    <tr><th>Дата</th><th>Вес (кг)</th><th>Действия</th></tr>
+<table class="table-auto w-full border-collapse border border-slate-400">
+    <thead>
+        <tr>
+            <th class="border border-slate-300 p-2">Дата</th>
+            <th class="border border-slate-300 p-2">Вес (кг)</th>
+            <th class="border border-slate-300 p-2">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
     {rows}
+    </tbody>
 </table>
 </div>
 '''
 
 WEIGHT_ROW_TEMPLATE = '''
 <tr id="edit-weight-row-{id}">
-    <td>{date}</td>
-    <td>{weight}</td>
-    <td>
-        <button hx-get="/section/nutrition/weight/edit/{id}" hx-target="#edit-weight-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button hx-delete="/section/nutrition/weight/delete/{id}" hx-target="#weight-list" hx-swap="outerHTML">🗑️</button>
+    <td class="border border-slate-300 p-2">{date}</td>
+    <td class="border border-slate-300 p-2">{weight}</td>
+    <td class="border border-slate-300 p-2">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/weight/edit/{id}" hx-target="#edit-weight-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/weight/delete/{id}" hx-target="#weight-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
 '''
 
 WEIGHT_EDIT_TEMPLATE = '''
 <tr id="edit-weight-row-{id}">
-    <td colspan="3">
+    <td colspan="3" class="p-2">
         <form hx-post="/section/nutrition/weight/edit/{id}" hx-target="#weight-list" hx-swap="outerHTML">
-            <input type="date" name="date" value="{date}" required>
-            <input type="number" step="0.01" name="weight" value="{weight}" required style="width:90px;">
-            <button type="submit">Сохранить</button>
-            <button type="button" onclick="window.location.reload()">Отмена</button>
+            <input class="border p-2 rounded" type="date" name="date" value="{date}" required>
+            <input class="border p-2 rounded w-24" type="number" step="0.01" name="weight" value="{weight}" required>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">��тмена</button>
         </form>
     </td>
 </tr>
@@ -1511,12 +1609,13 @@ async def delete_weight(weight_id: str):
     return render_weight_list()
 
 SETTINGS_TEMPLATE = '''
-<div style="max-width:400px;margin:0 auto;">
-    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" id="settings-goal-form" style="display:flex;gap:8px;align-items:center;">
-        <label>Целевые калории в день:
-            <input type="number" name="target_calories" value="{target_calories}" min="0" required style="width:120px;">
+<div class="max-w-md mx-auto">
+    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" id="settings-goal-form" class="flex gap-2 items-center">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="target_calories">
+            Целевые калории в день:
         </label>
-        <button type="submit">Сохранить</button>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="target_calories" type="number" name="target_calories" value="{target_calories}" min="0" required>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
     </form>
 </div>
 '''

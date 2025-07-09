@@ -4,36 +4,37 @@
     <meta charset="UTF-8">
     <title>Персональный календарь</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; }
-        .header { padding: 24px 0 12px 0; text-align: center; font-size: 2rem; font-weight: bold; }
-        .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
-        .tab { padding: 8px 20px; border: none; background: #f0f0f0; cursor: pointer; font-size: 1rem; border-radius: 8px 8px 0 0; }
-        .tab.active, .tab:focus { background: #fff; border-bottom: 2px solid #1976d2; color: #1976d2; outline: none; }
-        .tab:not(.active):hover { background: #e0e0e0; }
-        .tab-content { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px #0001; padding: 32px 24px; min-height: 120px; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="header">Персональный календарь</div>
-    <div class="tabs">
-        <button class="tab active" id="tab-habits" hx-get="/section/habits" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Привычки</button>
-        <button class="tab" id="tab-tasks" hx-get="/section/tasks" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Задачи</button>
-        <button class="tab" id="tab-nutrition" hx-get="/section/nutrition" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Питание</button>
-        <button class="tab" id="tab-settings" hx-get="/section/sport" hx-target="#tab-content" hx-swap="innerHTML" onclick="setActiveTab(this)">Настройки</button>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 text-white p-4">
+            <h1 class="text-2xl font-bold mb-4">Календарь</h1>
+            <nav>
+                <ul>
+                    <li><button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700" id="tab-habits" hx-get="/section/habits" hx-target="#content" hx-swap="innerHTML">Привычки</button></li>
+                    <li><button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700" id="tab-tasks" hx-get="/section/tasks" hx-target="#content" hx-swap="innerHTML">Задачи</button></li>
+                    <li><button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700" id="tab-nutrition" hx-get="/section/nutrition" hx-target="#content" hx-swap="innerHTML">Питание</button></li>
+                    <li><button class="w-full text-left py-2 px-4 rounded hover:bg-gray-700" id="tab-settings" hx-get="/section/sport" hx-target="#content" hx-swap="innerHTML">Настройки</button></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 p-10">
+            <div id="content" class="bg-white p-8 rounded-lg shadow-md">
+                <!-- HTMX content will be loaded here -->
+            </div>
+        </main>
     </div>
-    <div class="tab-content" id="tab-content">
-        <div>Привычки</div>
-    </div>
+
     <script>
-        function setActiveTab(tab) {
-            document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
-            tab.classList.add('active');
-        }
-        // Автоматически загружаем первую вкладку при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+            // Load initial content
+            htmx.process(document.getElementById('tab-habits'));
             document.getElementById('tab-habits').click();
         });
     </script>
 </body>
-</html> 
+</html>
