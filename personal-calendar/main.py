@@ -66,7 +66,39 @@ SCHEMA = {
         ("task_id", "UUID REFERENCES task(id)"),
         ("date", "DATE NOT NULL"),
         ("completed", "BOOLEAN NOT NULL")
-    ]
+    ],
+    # Продукты
+    "product": [
+        ("id", "UUID PRIMARY KEY"),
+        ("name", "VARCHAR(255) NOT NULL"),
+        ("calories_per_100g", "FLOAT NOT NULL"),
+        ("micro_description", "TEXT")
+    ],
+    # Блюда
+    "dish": [
+        ("id", "UUID PRIMARY KEY"),
+        ("name", "VARCHAR(255) NOT NULL"),
+        ("description", "TEXT")
+    ],
+    # Ингредиенты блюда (DishIngredient)
+    "dish_ingredient": [
+        ("id", "UUID PRIMARY KEY"),
+        ("dish_id", "UUID REFERENCES dish(id) ON DELETE CASCADE"),
+        ("product_id", "UUID REFERENCES product(id) ON DELETE CASCADE"),
+        ("grams", "FLOAT NOT NULL")
+    ],
+    # Лог приёмов пищи
+    "meal_log": [
+        ("id", "UUID PRIMARY KEY"),
+        ("date", "DATE NOT NULL"),
+        ("dish_id", "UUID REFERENCES dish(id) ON DELETE CASCADE"),
+        ("consumed_grams", "FLOAT NOT NULL")
+    ],
+    # Целевые калории
+    "calories_goal": [
+        ("id", "UUID PRIMARY KEY"),
+        ("target_calories", "INTEGER NOT NULL")
+    ],
 }
 
 def create_enum(cur, name, values):
@@ -892,9 +924,325 @@ async def delete_task_entry(entry_id: str):
     conn.close()
     return HTMLResponse("")
 
+# --- Раздел Питание ---
+NUTRITION_SECTION_TEMPLATE = '''
+<div>
+    <div class="tabs" style="margin-bottom: 0;">
+        <button class="tab {active_products}" id="tab-nutrition-products" hx-get="/section/nutrition/products" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Продукты</button>
+        <button class="tab {active_dishes}" id="tab-nutrition-dishes" hx-get="/section/nutrition/dishes" hx-target="#nutrition-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Блюда</button>
+    </div>
+    <div id="nutrition-subsection" class="tab-content" style="margin-top:0;">{content}</div>
+</div>
+<script>
+function setActiveSubTab(tab) {{
+    document.querySelectorAll('.tabs .tab').forEach(btn => btn.classList.remove('active'));
+    tab.classList.add('active');
+}}
+</script>
+'''
+
 @app.get("/section/nutrition", response_class=HTMLResponse)
 async def section_nutrition():
-    return HTMLResponse("<div>Питание</div>")
+    content = render_product_list()
+    html = NUTRITION_SECTION_TEMPLATE.format(
+        active_products="active", active_dishes="",
+        content=content
+    )
+    return HTMLResponse(html)
+
+# --- Продукты ---
+PRODUCT_LIST_TEMPLATE = '''
+<div id="product-list">
+<h2>Продукты</h2>
+<form hx-post="/section/nutrition/products/add" hx-target="#product-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
+    <input type="text" name="name" placeholder="Название" required>
+    <input type="number" step="0.01" name="calories_per_100g" placeholder="Ккал на 100г" required>
+    <input type="text" name="micro_description" placeholder="Микроэлементы">
+    <button type="submit">Добавить</button>
+</form>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr><th>Название</th><th>Ккал/100г</th><th>Микроэлементы</th><th>Действия</th></tr>
+    {rows}
+</table>
+</div>
+'''
+
+PRODUCT_ROW_TEMPLATE = '''
+<tr id="edit-product-row-{id}">
+    <td>{name}</td>
+    <td>{calories_per_100g}</td>
+    <td>{micro_description}</td>
+    <td>
+        <button hx-get="/section/nutrition/products/edit/{id}" hx-target="#edit-product-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button hx-delete="/section/nutrition/products/delete/{id}" hx-target="#product-list" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
+'''
+
+PRODUCT_EDIT_TEMPLATE = '''
+<tr id="edit-product-row-{id}">
+    <td colspan="4">
+        <form hx-post="/section/nutrition/products/edit/{id}" hx-target="#product-list" hx-swap="outerHTML">
+            <input type="text" name="name" value="{name}" required>
+            <input type="number" step="0.01" name="calories_per_100g" value="{calories_per_100g}" required>
+            <input type="text" name="micro_description" value="{micro_description}">
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="window.location.reload()">Отмена</button>
+        </form>
+    </td>
+</tr>
+'''
+
+def render_product_list():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, calories_per_100g, micro_description FROM product ORDER BY name;")
+    rows = "".join(
+        PRODUCT_ROW_TEMPLATE.format(id=row[0], name=row[1], calories_per_100g=row[2], micro_description=row[3] or "") for row in cur.fetchall()
+    )
+    cur.close()
+    conn.close()
+    return PRODUCT_LIST_TEMPLATE.format(rows=rows)
+
+@app.get("/section/nutrition/products", response_class=HTMLResponse)
+async def nutrition_products():
+    return HTMLResponse(render_product_list())
+
+@app.post("/section/nutrition/products/add", response_class=HTMLResponse)
+async def add_product(name: str = Form(...), calories_per_100g: float = Form(...), micro_description: str = Form(None)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO product (id, name, calories_per_100g, micro_description) VALUES (%s, %s, %s, %s);", (str(uuid.uuid4()), name, calories_per_100g, micro_description))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_product_list()
+
+@app.get("/section/nutrition/products/edit/{product_id}", response_class=HTMLResponse)
+async def edit_product_form(product_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, calories_per_100g, micro_description FROM product WHERE id = %s;", (product_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='4'>Продукт не найден</td></tr>")
+    return PRODUCT_EDIT_TEMPLATE.format(id=row[0], name=row[1], calories_per_100g=row[2], micro_description=row[3] or "")
+
+@app.post("/section/nutrition/products/edit/{product_id}", response_class=HTMLResponse)
+async def edit_product(product_id: str, name: str = Form(...), calories_per_100g: float = Form(...), micro_description: str = Form(None)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE product SET name = %s, calories_per_100g = %s, micro_description = %s WHERE id = %s;", (name, calories_per_100g, micro_description, product_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_product_list()
+
+@app.delete("/section/nutrition/products/delete/{product_id}", response_class=HTMLResponse)
+async def delete_product(product_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM product WHERE id = %s;", (product_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_product_list()
+
+# --- Блюда ---
+DISH_LIST_TEMPLATE = '''
+<div id="dish-list">
+<h2>Блюда</h2>
+<form hx-post="/section/nutrition/dishes/add" hx-target="#dish-list" hx-swap="outerHTML" style="margin-bottom: 16px;">
+    <input type="text" name="name" placeholder="Название" required>
+    <input type="text" name="description" placeholder="Описание">
+    <button type="submit">Добавить</button>
+</form>
+<table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+    <tr><th>Название</th><th>Описание</th><th>Действия</th></tr>
+    {rows}
+</table>
+</div>
+'''
+
+DISH_ROW_TEMPLATE = '''
+<tr id="edit-dish-row-{id}">
+    <td>{name}</td>
+    <td>{description}</td>
+    <td>
+        <button hx-get="/section/nutrition/dishes/edit/{id}" hx-target="#edit-dish-row-{id}" hx-swap="outerHTML">✏️</button>
+        <button hx-get="/section/nutrition/dishes/ingredients/{id}" hx-target="#ingredients-row-{id}" hx-swap="outerHTML">Ингредиенты</button>
+        <button hx-delete="/section/nutrition/dishes/delete/{id}" hx-target="#dish-list" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
+<tr id="ingredients-row-{id}"></tr>
+'''
+
+# Шаблон для ингредиентов блюда
+DISH_INGREDIENTS_TEMPLATE = '''
+<td colspan="3">
+    <div style="background:#f9f9f9; padding:12px; border-radius:8px;">
+        <b>Ингредиенты:</b>
+        <form hx-post="/section/nutrition/dishes/ingredients/add/{dish_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML" style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
+            <select name="product_id" required>
+                <option value="">Продукт...</option>
+                {product_options}
+            </select>
+            <input type="number" step="0.01" name="grams" placeholder="Граммы" required style="width:90px;">
+            <button type="submit">Добавить</button>
+        </form>
+        <table border="1" cellpadding="6" style="border-collapse:collapse; width:100%;">
+            <tr><th>Продукт</th><th>Граммы</th><th></th></tr>
+            {rows}
+        </table>
+    </div>
+</td>
+'''
+
+DISH_INGREDIENT_ROW_TEMPLATE = '''
+<tr>
+    <td>{product_name}</td>
+    <td>{grams}</td>
+    <td><button hx-delete="/section/nutrition/dishes/ingredients/delete/{ingredient_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML">🗑️</button></td>
+</tr>
+'''
+
+def get_product_options(selected=None):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name FROM product ORDER BY name;")
+    options = ""
+    for row in cur.fetchall():
+        sel = " selected" if selected and row[0] == selected else ""
+        options += f'<option value="{row[0]}"{sel}>{row[1]}</option>'
+    cur.close()
+    conn.close()
+    return options
+
+def render_dish_ingredients(dish_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT di.id, di.grams, p.name
+        FROM dish_ingredient di JOIN product p ON di.product_id = p.id
+        WHERE di.dish_id = %s
+        ORDER BY p.name;
+    ''', (dish_id,))
+    rows = "".join(
+        DISH_INGREDIENT_ROW_TEMPLATE.format(
+            ingredient_id=row[0], grams=row[1], product_name=row[2], dish_id=dish_id
+        ) for row in cur.fetchall()
+    )
+    cur.close()
+    conn.close()
+    inner = DISH_INGREDIENTS_TEMPLATE.format(
+        dish_id=dish_id,
+        product_options=get_product_options(),
+        rows=rows
+    )
+    return f'<tr id="ingredients-row-{dish_id}">{inner}</tr>'
+
+@app.get("/section/nutrition/dishes/ingredients/{dish_id}", response_class=HTMLResponse)
+async def dish_ingredients(dish_id: str):
+    return HTMLResponse(render_dish_ingredients(dish_id))
+
+@app.post("/section/nutrition/dishes/ingredients/add/{dish_id}", response_class=HTMLResponse)
+async def add_dish_ingredient(dish_id: str, product_id: str = Form(...), grams: float = Form(...)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO dish_ingredient (id, dish_id, product_id, grams) VALUES (%s, %s, %s, %s);", (str(uuid.uuid4()), dish_id, product_id, grams))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_dish_ingredients(dish_id)
+
+@app.delete("/section/nutrition/dishes/ingredients/delete/{ingredient_id}", response_class=HTMLResponse)
+async def delete_dish_ingredient(ingredient_id: str):
+    # Получаем dish_id для рендера
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT dish_id FROM dish_ingredient WHERE id = %s;", (ingredient_id,))
+    row = cur.fetchone()
+    dish_id = row[0] if row else None
+    if dish_id:
+        cur.execute("DELETE FROM dish_ingredient WHERE id = %s;", (ingredient_id,))
+        conn.commit()
+    cur.close()
+    conn.close()
+    if dish_id:
+        return render_dish_ingredients(dish_id)
+    return HTMLResponse("")
+
+DISH_EDIT_TEMPLATE = '''
+<tr id="edit-dish-row-{id}">
+    <td colspan="3">
+        <form hx-post="/section/nutrition/dishes/edit/{id}" hx-target="#dish-list" hx-swap="outerHTML">
+            <input type="text" name="name" value="{name}" required>
+            <input type="text" name="description" value="{description}">
+            <button type="submit">Сохранить</button>
+            <button type="button" onclick="window.location.reload()">Отмена</button>
+        </form>
+    </td>
+</tr>
+'''
+
+def render_dish_list():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description FROM dish ORDER BY name;")
+    rows = "".join(
+        DISH_ROW_TEMPLATE.format(id=row[0], name=row[1], description=row[2] or "") for row in cur.fetchall()
+    )
+    cur.close()
+    conn.close()
+    return DISH_LIST_TEMPLATE.format(rows=rows)
+
+@app.get("/section/nutrition/dishes", response_class=HTMLResponse)
+async def nutrition_dishes():
+    return HTMLResponse(render_dish_list())
+
+@app.post("/section/nutrition/dishes/add", response_class=HTMLResponse)
+async def add_dish(name: str = Form(...), description: str = Form(None)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO dish (id, name, description) VALUES (%s, %s, %s);", (str(uuid.uuid4()), name, description))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_dish_list()
+
+@app.get("/section/nutrition/dishes/edit/{dish_id}", response_class=HTMLResponse)
+async def edit_dish_form(dish_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, name, description FROM dish WHERE id = %s;", (dish_id,))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if not row:
+        return HTMLResponse("<tr><td colspan='3'>Блюдо не найдено</td></tr>")
+    return DISH_EDIT_TEMPLATE.format(id=row[0], name=row[1], description=row[2] or "")
+
+@app.post("/section/nutrition/dishes/edit/{dish_id}", response_class=HTMLResponse)
+async def edit_dish(dish_id: str, name: str = Form(...), description: str = Form(None)):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("UPDATE dish SET name = %s, description = %s WHERE id = %s;", (name, description, dish_id))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_dish_list()
+
+@app.delete("/section/nutrition/dishes/delete/{dish_id}", response_class=HTMLResponse)
+async def delete_dish(dish_id: str):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM dish WHERE id = %s;", (dish_id,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return render_dish_list()
 
 @app.get("/section/sport", response_class=HTMLResponse)
 async def section_sport():
