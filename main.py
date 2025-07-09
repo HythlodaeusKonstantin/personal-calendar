@@ -328,7 +328,7 @@ HABIT_CATEGORY_LIST_TEMPLATE = '''
     <thead>
         <tr>
             <th class="border border-slate-300 p-2">Название</th>
-            <th class="border border-slate-300 p-2 w-auto">Действия</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -339,10 +339,10 @@ HABIT_CATEGORY_LIST_TEMPLATE = '''
 '''
 
 HABIT_CATEGORY_ROW_TEMPLATE = '''
-<tr id="edit-row-{id}">
+<tr id="edit-habit-category-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
-    <td class="border border-slate-300 p-2 w-auto">
-        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/category/edit/{id}" hx-target="#edit-row-{id}" hx-swap="outerHTML">✏️</button>
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
+        <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/category/edit/{id}" hx-target="#edit-habit-category-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/category/delete/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
@@ -350,7 +350,7 @@ HABIT_CATEGORY_ROW_TEMPLATE = '''
 
 HABIT_CATEGORY_EDIT_TEMPLATE = '''
 <tr id="edit-habit-category-row-{id}">
-    <td colspan="3" class="p-2">
+    <td colspan="2" class="p-2">
         <form hx-post="/section/habits/category/edit/{id}" hx-target="#habit-category-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
@@ -501,7 +501,7 @@ HABIT_LIST_TEMPLATE = '''
             <th class="border border-slate-300 p-2">Описание</th>
             <th class="border border-slate-300 p-2">Категория</th>
             <th class="border border-slate-300 p-2">Приоритет</th>
-            <th class="border border-slate-300 p-2 w-auto">Действия</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -517,7 +517,7 @@ HABIT_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{description}</td>
     <td class="border border-slate-300 p-2">{category}</td>
     <td class="border border-slate-300 p-2">{priority}</td>
-    <td class="border border-slate-300 p-2 w-auto">
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/habits/habits/edit/{id}" hx-target="#edit-habit-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/habits/habits/delete/{id}" hx-target="#habit-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -733,7 +733,7 @@ TASK_CATEGORY_LIST_TEMPLATE = '''
     <thead>
         <tr>
             <th class="border border-slate-300 p-2">Название</th>
-            <th class="border border-slate-300 p-2 w-auto">Действия</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -746,7 +746,7 @@ TASK_CATEGORY_LIST_TEMPLATE = '''
 TASK_CATEGORY_ROW_TEMPLATE = '''
 <tr id="edit-task-category-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
-    <td class="border border-slate-300 p-2 w-auto">
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/categories/edit/{id}" hx-target="#edit-task-category-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/categories/delete/{id}" hx-target="#task-category-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -755,7 +755,7 @@ TASK_CATEGORY_ROW_TEMPLATE = '''
 
 TASK_CATEGORY_EDIT_TEMPLATE = '''
 <tr id="edit-task-category-row-{id}">
-    <td colspan="3" class="p-2">
+    <td colspan="2" class="p-2">
         <form hx-post="/section/tasks/categories/edit/{id}" hx-target="#task-category-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
@@ -852,7 +852,7 @@ TASK_LIST_TEMPLATE = '''
     </select>
     <input class="border p-2 rounded w-full mb-2" type="date" name="date" required>
     <select class="border p-2 rounded w-full mb-2" name="repeat" required>
-        <option value="NONE">Без повтора</option>
+        <option value="NONE">Нет</option>
         <option value="DAILY">Ежедневно</option>
         <option value="WEEKLY">Еженедельно</option>
     </select>
@@ -866,7 +866,7 @@ TASK_LIST_TEMPLATE = '''
             <th class="border border-slate-300 p-2">Категория</th>
             <th class="border border-slate-300 p-2">Дата</th>
             <th class="border border-slate-300 p-2">Повтор</th>
-            <th class="border border-slate-300 p-2 w-auto">Действия</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -883,7 +883,7 @@ TASK_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{category}</td>
     <td class="border border-slate-300 p-2">{date}</td>
     <td class="border border-slate-300 p-2">{repeat}</td>
-    <td class="border border-slate-300 p-2 w-auto">
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/tasks/tasks/edit/{id}" hx-target="#edit-task-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/tasks/tasks/delete/{id}" hx-target="#task-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -892,7 +892,7 @@ TASK_ROW_TEMPLATE = '''
 
 TASK_EDIT_TEMPLATE = '''
 <tr id="edit-task-row-{id}">
-    <td colspan="7" class="p-2">
+    <td colspan="6" class="p-2">
         <form hx-post="/section/tasks/tasks/edit/{id}" hx-target="#task-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
@@ -1161,22 +1161,16 @@ function setActiveSubTab(tab) {{
 </script>
 '''
 
-from fastapi import Query
-from datetime import datetime
-
 MEAL_LOG_LIST_TEMPLATE = '''
 <div id="meal-log-list">
 <h2 class="text-2xl font-bold mb-4">Приемы пищи</h2>
-<form id="meal-log-date-form" class="mb-4">
-    <label>Дата: <input class="border p-2 rounded" type="date" name="date" value="{date}" hx-get="/section/nutrition/meal-log" hx-target="#nutrition-subsection" hx-swap="innerHTML"></label>
-</form>
 <form hx-post="/section/nutrition/meal-log/add" hx-target="#meal-log-list" hx-swap="outerHTML" class="mb-4 flex gap-2 items-center">
+    <input class="border p-2 rounded" type="date" name="date" value="{date}" required>
     <select class="border p-2 rounded" name="dish_id" required>
         <option value="">Блюдо...</option>
         {dish_options}
     </select>
     <input class="border p-2 rounded w-24" type="number" step="0.01" name="consumed_grams" placeholder="Граммы" required>
-    <input type="hidden" name="date" value="{date}">
     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
 <table class="table-auto w-full border-collapse border border-slate-400">
@@ -1184,7 +1178,7 @@ MEAL_LOG_LIST_TEMPLATE = '''
         <tr>
             <th class="border border-slate-300 p-2">Блюдо</th>
             <th class="border border-slate-300 p-2">Граммы</th>
-            <th class="border border-slate-300 p-2 w-auto">Действия</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -1198,7 +1192,7 @@ MEAL_LOG_ROW_TEMPLATE = '''
 <tr id="edit-meal-log-row-{id}">
     <td class="border border-slate-300 p-2">{dish_name}</td>
     <td class="border border-slate-300 p-2">{consumed_grams}</td>
-    <td class="border border-slate-300 p-2 w-auto">
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#edit-meal-log-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/meal-log/delete/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -1208,14 +1202,19 @@ MEAL_LOG_ROW_TEMPLATE = '''
 MEAL_LOG_EDIT_TEMPLATE = '''
 <tr id="edit-meal-log-row-{id}">
     <td colspan="3" class="p-2">
-        <form hx-post="/section/nutrition/meal-log/edit/{id}" hx-target="#meal-log-list" hx-swap="outerHTML">
-            <select class="border p-2 rounded" name="dish_id" required>
+        <form hx-post="/section/nutrition/meal-log/edit/{id}?date={date}" hx-target="#meal-log-list" hx-swap="outerHTML">
+            <select class="border p-2 rounded w-full mb-2" name="dish_id" required>
                 {dish_options}
             </select>
-            <input class="border p-2 rounded w-24" type="number" step="0.01" name="consumed_grams" value="{consumed_grams}" required>
+            <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="consumed_grams" value="{consumed_grams}" required>
             <input type="hidden" name="date" value="{date}">
             <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
-            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" onclick="window.location.reload()">Отмена</button>
+            <button class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" type="button" 
+                hx-get="/section/nutrition/meal-log/row/{id}?date={date}" 
+                hx-target="#edit-meal-log-row-{id}" 
+                hx-swap="outerHTML">
+                Отмена
+            </button>
         </form>
     </td>
 </tr>
@@ -1343,18 +1342,18 @@ PRODUCT_LIST_TEMPLATE = '''
 <div id="product-list">
 <h2 class="text-2xl font-bold mb-4">Продукты</h2>
 <form hx-post="/section/nutrition/products/add" hx-target="#product-list" hx-swap="outerHTML" class="mb-4">
-    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название" required>
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название продукта" required>
     <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="calories_per_100g" placeholder="Ккал на 100г" required>
-    <input class="border p-2 rounded w-full mb-2" type="text" name="micro_description" placeholder="Микроэлементы">
+    <input class="border p-2 rounded w-full mb-2" type="text" name="micro_description" placeholder="Описание">
     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
 <table class="table-auto w-full border-collapse border border-slate-400">
     <thead>
         <tr>
             <th class="border border-slate-300 p-2">Название</th>
-            <th class="border border-slate-300 p-2">Ккал/100г</th>
-            <th class="border border-slate-300 p-2">Микроэлементы</th>
-            <th class="border border-slate-300 p-2 w-auto">Действия</th>
+            <th class="border border-slate-300 p-2">Ккал на 100г</th>
+            <th class="border border-slate-300 p-2">Описание</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -1369,7 +1368,7 @@ PRODUCT_ROW_TEMPLATE = '''
     <td class="border border-slate-300 p-2">{name}</td>
     <td class="border border-slate-300 p-2">{calories_per_100g}</td>
     <td class="border border-slate-300 p-2">{micro_description}</td>
-    <td class="border border-slate-300 p-2 w-auto">
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/products/edit/{id}" hx-target="#edit-product-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/products/delete/{id}" hx-target="#product-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -1378,7 +1377,7 @@ PRODUCT_ROW_TEMPLATE = '''
 
 PRODUCT_EDIT_TEMPLATE = '''
 <tr id="edit-product-row-{id}">
-    <td colspan="5" class="p-2">
+    <td colspan="4" class="p-2">
         <form hx-post="/section/nutrition/products/edit/{id}" hx-target="#product-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="calories_per_100g" value="{calories_per_100g}" required>
@@ -1471,7 +1470,7 @@ DISH_LIST_TEMPLATE = '''
 <div id="dish-list">
 <h2 class="text-2xl font-bold mb-4">Блюда</h2>
 <form hx-post="/section/nutrition/dishes/add" hx-target="#dish-list" hx-swap="outerHTML" class="mb-4">
-    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название" required>
+    <input class="border p-2 rounded w-full mb-2" type="text" name="name" placeholder="Название блюда" required>
     <input class="border p-2 rounded w-full mb-2" type="text" name="description" placeholder="Описание">
     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
 </form>
@@ -1480,7 +1479,7 @@ DISH_LIST_TEMPLATE = '''
         <tr>
             <th class="border border-slate-300 p-2">Название</th>
             <th class="border border-slate-300 p-2">Описание</th>
-            <th class="border border-slate-300 p-2 w-auto">Действия</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -1494,121 +1493,16 @@ DISH_ROW_TEMPLATE = '''
 <tr id="edit-dish-row-{id}">
     <td class="border border-slate-300 p-2">{name}</td>
     <td class="border border-slate-300 p-2">{description}</td>
-    <td class="border border-slate-300 p-2 w-auto">
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/dishes/edit/{id}" hx-target="#edit-dish-row-{id}" hx-swap="outerHTML">✏️</button>
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/dishes/ingredients/{id}" hx-target="#ingredients-row-{id}" hx-swap="outerHTML">Ингредиенты</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/delete/{id}" hx-target="#dish-list" hx-swap="outerHTML">🗑️</button>
     </td>
 </tr>
-<tr id="ingredients-row-{id}"></tr>
 '''
-
-# Шаблон для ингредиентов блюда
-DISH_INGREDIENTS_TEMPLATE = '''
-<td colspan="3" class="p-2">
-    <div class="bg-gray-100 p-3 rounded-lg">
-        <b class="font-bold">Ингредиенты:</b>
-        <form hx-post="/section/nutrition/dishes/ingredients/add/{dish_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML" class="my-2 flex gap-2 items-center">
-            <select class="border p-2 rounded" name="product_id" required>
-                <option value="">Продукт...</option>
-                {product_options}
-            </select>
-            <input class="border p-2 rounded w-24" type="number" step="0.01" name="grams" placeholder="Граммы" required>
-            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Добавить</button>
-        </form>
-        <table class="table-auto w-full border-collapse border border-slate-400">
-            <thead>
-                <tr>
-                    <th class="border border-slate-300 p-2">Продукт</th>
-                    <th class="border border-slate-300 p-2">Граммы</th>
-                    <th class="border border-slate-300 p-2 w-auto"></th>
-                </tr>
-            </thead>
-            <tbody>
-            {rows}
-            </tbody>
-        </table>
-    </div>
-</td>
-'''
-
-DISH_INGREDIENT_ROW_TEMPLATE = '''
-<tr>
-    <td class="border border-slate-300 p-2">{product_name}</td>
-    <td class="border border-slate-300 p-2">{grams}</td>
-    <td class="border border-slate-300 p-2 w-auto"><button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/dishes/ingredients/delete/{ingredient_id}" hx-target="#ingredients-row-{dish_id}" hx-swap="outerHTML">🗑️</button></td>
-</tr>
-'''
-
-def get_product_options(selected=None):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, name FROM product ORDER BY name;")
-    options = ""
-    for row in cur.fetchall():
-        sel = " selected" if selected and row[0] == selected else ""
-        options += f'<option value="{row[0]}"{sel}>{row[1]}</option>'
-    cur.close()
-    conn.close()
-    return options
-
-def render_dish_ingredients(dish_id):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('''
-        SELECT di.id, di.grams, p.name
-        FROM dish_ingredient di JOIN product p ON di.product_id = p.id
-        WHERE di.dish_id = %s
-        ORDER BY p.name;
-    ''', (dish_id,))
-    rows = "".join(
-        DISH_INGREDIENT_ROW_TEMPLATE.format(
-            ingredient_id=row[0], grams=row[1], product_name=row[2], dish_id=dish_id
-        ) for row in cur.fetchall()
-    )
-    cur.close()
-    conn.close()
-    inner = DISH_INGREDIENTS_TEMPLATE.format(
-        dish_id=dish_id,
-        product_options=get_product_options(),
-        rows=rows
-    )
-    return f'<tr id="ingredients-row-{dish_id}">{inner}</tr>'
-
-@app.get("/section/nutrition/dishes/ingredients/{dish_id}", response_class=HTMLResponse)
-async def dish_ingredients(dish_id: str):
-    return HTMLResponse(render_dish_ingredients(dish_id))
-
-@app.post("/section/nutrition/dishes/ingredients/add/{dish_id}", response_class=HTMLResponse)
-async def add_dish_ingredient(dish_id: str, product_id: str = Form(...), grams: float = Form(...)):
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO dish_ingredient (id, dish_id, product_id, grams) VALUES (%s, %s, %s, %s);", (str(uuid.uuid4()), dish_id, product_id, grams))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return render_dish_ingredients(dish_id)
-
-@app.delete("/section/nutrition/dishes/ingredients/delete/{ingredient_id}", response_class=HTMLResponse)
-async def delete_dish_ingredient(ingredient_id: str):
-    # Получаем dish_id для рендера
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT dish_id FROM dish_ingredient WHERE id = %s;", (ingredient_id,))
-    row = cur.fetchone()
-    dish_id = row[0] if row else None
-    if dish_id:
-        cur.execute("DELETE FROM dish_ingredient WHERE id = %s;", (ingredient_id,))
-        conn.commit()
-    cur.close()
-    conn.close()
-    if dish_id:
-        return render_dish_ingredients(dish_id)
-    return HTMLResponse("")
 
 DISH_EDIT_TEMPLATE = '''
 <tr id="edit-dish-row-{id}">
-    <td colspan="4" class="p-2">
+    <td colspan="3" class="p-2">
         <form hx-post="/section/nutrition/dishes/edit/{id}" hx-target="#dish-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="text" name="name" value="{name}" required>
             <input class="border p-2 rounded w-full mb-2" type="text" name="description" value="{description}">
@@ -1694,7 +1588,7 @@ WEIGHT_LIST_TEMPLATE = '''
         <tr>
             <th class="border border-slate-300 p-2">Дата</th>
             <th class="border border-slate-300 p-2">Вес (кг)</th>
-            <th class="border border-slate-300 p-2">Действия</th>
+            <th class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">Действия</th>
         </tr>
     </thead>
     <tbody>
@@ -1708,7 +1602,7 @@ WEIGHT_ROW_TEMPLATE = '''
 <tr id="edit-weight-row-{id}">
     <td class="border border-slate-300 p-2">{date}</td>
     <td class="border border-slate-300 p-2">{weight}</td>
-    <td class="border border-slate-300 p-2">
+    <td class="border border-slate-300 p-2 text-center whitespace-nowrap w-1">
         <button class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded" hx-get="/section/nutrition/weight/edit/{id}" hx-target="#edit-weight-row-{id}" hx-swap="outerHTML">✏️</button>
         <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded" hx-delete="/section/nutrition/weight/delete/{id}" hx-target="#weight-list" hx-swap="outerHTML">🗑️</button>
     </td>
@@ -1717,7 +1611,7 @@ WEIGHT_ROW_TEMPLATE = '''
 
 WEIGHT_EDIT_TEMPLATE = '''
 <tr id="edit-weight-row-{id}">
-    <td colspan="4" class="p-2">
+    <td colspan="3" class="p-2">
         <form hx-post="/section/nutrition/weight/edit/{id}" hx-target="#weight-list" hx-swap="outerHTML">
             <input class="border p-2 rounded w-full mb-2" type="date" name="date" value="{date}" required>
             <input class="border p-2 rounded w-full mb-2" type="number" step="0.01" name="weight" value="{weight}" required>
