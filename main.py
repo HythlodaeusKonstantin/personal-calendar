@@ -1608,14 +1608,32 @@ async def delete_weight(weight_id: str):
     conn.close()
     return render_weight_list()
 
+SETTINGS_SECTION_TEMPLATE = '''
+<div>
+    <div class="flex border-b">
+        <button class="py-2 px-4 text-gray-500 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 active" id="tab-settings-general" hx-get="/section/settings/general" hx-target="#settings-subsection" hx-swap="innerHTML" onclick="setActiveSubTab(this)">Общие</button>
+    </div>
+    <div id="settings-subsection" class="p-4">{content}</div>
+</div>
+<script>
+function setActiveSubTab(tab) {{
+    document.querySelectorAll('.tabs .tab').forEach(btn => btn.classList.remove('active'));
+    tab.classList.add('active');
+}}
+</script>
+'''
+
 SETTINGS_TEMPLATE = '''
-<div class="max-w-md mx-auto">
-    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" id="settings-goal-form" class="flex gap-2 items-center">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="target_calories">
-            Целевые калории в день:
-        </label>
-        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="target_calories" type="number" name="target_calories" value="{target_calories}" min="0" required>
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" type="submit">Сохранить</button>
+<div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">Настройки калорий</h2>
+    <form hx-post="/section/settings/calories-goal" hx-target="#settings-goal-form" hx-swap="outerHTML" id="settings-goal-form" class="space-y-4">
+        <div>
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="target_calories">
+                Целевые калории в день:
+            </label>
+            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="target_calories" type="number" name="target_calories" value="{target_calories}" min="0" required>
+        </div>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">Сохранить</button>
     </form>
 </div>
 '''
@@ -1629,8 +1647,16 @@ def get_calories_goal():
     conn.close()
     return row[0] if row else 2000
 
-@app.get("/section/sport", response_class=HTMLResponse)
+@app.get("/section/settings", response_class=HTMLResponse)
 async def section_settings():
+    content = (await settings_general()).body.decode()
+    html = SETTINGS_SECTION_TEMPLATE.format(
+        content=content
+    )
+    return HTMLResponse(html)
+
+@app.get("/section/settings/general", response_class=HTMLResponse)
+async def settings_general():
     target_calories = get_calories_goal()
     return HTMLResponse(SETTINGS_TEMPLATE.format(target_calories=target_calories))
 
