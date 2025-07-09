@@ -73,4 +73,10 @@ coverage.xml
 
 # OS files
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cert 

@@ -22,7 +22,7 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
     ports:
-      - "8000:8000"
+      - "8443:8443"
     depends_on:
       - db
 
