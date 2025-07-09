@@ -1016,18 +1016,50 @@ def get_dish_options(selected=None):
 def render_meal_log_list(date_str):
     conn = get_db_connection()
     cur = conn.cursor()
+    # Получаем все приёмы пищи за день
     cur.execute('''
-        SELECT m.id, d.name, m.consumed_grams
+        SELECT m.id, d.name, m.dish_id, m.consumed_grams
         FROM meal_log m JOIN dish d ON m.dish_id = d.id
         WHERE m.date = %s
         ORDER BY d.name;
     ''', (date_str,))
+    meal_rows = cur.fetchall()
     rows = "".join(
-        MEAL_LOG_ROW_TEMPLATE.format(id=row[0], dish_name=row[1], consumed_grams=row[2], date=date_str) for row in cur.fetchall()
+        MEAL_LOG_ROW_TEMPLATE.format(id=row[0], dish_name=row[1], consumed_grams=row[3], date=date_str) for row in meal_rows
     )
+    # --- КАЛОРИИ ---
+    # Для каждого блюда считаем калории
+    total_calories = 0.0
+    for _, _, dish_id, consumed_grams in meal_rows:
+        # Получаем ингредиенты блюда
+        cur.execute('''
+            SELECT di.grams, p.calories_per_100g
+            FROM dish_ingredient di JOIN product p ON di.product_id = p.id
+            WHERE di.dish_id = %s
+        ''', (dish_id,))
+        ingredients = cur.fetchall()
+        # Считаем калорийность блюда на 1 грамм
+        dish_calories_per_gram = 0.0
+        for grams, cal_per_100g in ingredients:
+            if grams and cal_per_100g:
+                dish_calories_per_gram += (grams / 100.0) * cal_per_100g
+        if ingredients:
+            dish_calories_per_gram = dish_calories_per_gram / sum(g for g, _ in ingredients) if sum(g for g, _ in ingredients) > 0 else 0
+        # Калории за приём пищи
+        total_calories += dish_calories_per_gram * consumed_grams
+    # Получаем целевое значение
+    target_calories = get_calories_goal()
+    calories_block = f'<div style="margin-bottom:12px;"><b>Количество калорий:</b> {int(total_calories)}</div>'
+    if total_calories < target_calories:
+        diff = int(target_calories - total_calories)
+        calories_block = f'<div style="margin-bottom:8px;"><b>Количество калорий:</b> {int(total_calories)}</div>' \
+                        f'<div style="color:#d35400;margin-bottom:12px;">До целевого веса: {diff}</div>'
+    else:
+        calories_block = f'<div style="margin-bottom:8px;"><b>Количество калорий:</b> {int(total_calories)}</div>' \
+                        f'<div style="color:green;font-weight:bold;margin-bottom:12px;">Цель по калориям выполнена</div>'
     cur.close()
     conn.close()
-    return MEAL_LOG_LIST_TEMPLATE.format(rows=rows, dish_options=get_dish_options(), date=date_str)
+    return MEAL_LOG_LIST_TEMPLATE.format(rows=rows, dish_options=get_dish_options(), date=date_str).replace('<table', calories_block + '<table', 1)
 
 @app.get("/section/nutrition/meal-log", response_class=HTMLResponse)
 async def nutrition_meal_log(date: str = Query(None)):
