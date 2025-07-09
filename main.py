@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, APIRouter, Form, Query, HTTPException, Response
+from fastapi import FastAPI, Request, APIRouter, Form, Query, HTTPException, Response, Cookie
 from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import psycopg2
@@ -33,6 +33,13 @@ SCHEMA = {
         ("id", "UUID PRIMARY KEY"),
         ("username", "VARCHAR(255) UNIQUE NOT NULL"),
         ("password_hash", "VARCHAR(255) NOT NULL"),
+        ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    ],
+    # Сессии
+    "sessions": [
+        ("id", "UUID PRIMARY KEY"),
+        ("user_id", "UUID REFERENCES users(id)"),
+        ("session_token", "VARCHAR(64) UNIQUE NOT NULL"),
         ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     ],
     # Категории привычек
@@ -243,7 +250,11 @@ def on_startup():
     init_db_schema()
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
+async def index(request: Request, session_token: str = Cookie(None)):
+    # Если есть активная сессия — редиректим на /app
+    user = get_user_by_session_token(session_token)
+    if user:
+        return RedirectResponse("/app")
     # Проверяем, есть ли пользователи в БД
     if not check_user_exists():
         # Если пользователей нет, показываем форму регистрации
@@ -280,11 +291,17 @@ async def login(username: str = Form(...), password: str = Form(...)):
             "<div class='error' style='color:red;text-align:center;margin-bottom:16px;'>Неверный логин или пароль</div>",
             status_code=401
         )
-    # Успешный вход — делаем redirect через htmx
-    return HTMLResponse(headers={"HX-Redirect": "/app"})
+    # Успешный вход — создаём сессию и устанавливаем cookie
+    token = create_session(user[0])
+    response = HTMLResponse(headers={"HX-Redirect": "/app"})
+    response.set_cookie("session_token", token, httponly=True)
+    return response
 
 @app.get("/app", response_class=HTMLResponse)
-async def app_main(request: Request):
+async def app_main(request: Request, session_token: str = Cookie(None)):
+    user = get_user_by_session_token(session_token)
+    if not user:
+        return RedirectResponse("/")
     # Главная страница приложения (после входа)
     template = env.get_template("index.html")
     html_content = template.render(request=request)
@@ -1768,4 +1785,44 @@ async def set_calories_goal(target_calories: int = Form(...)):
     conn.commit()
     cur.close()
     conn.close()
-    return SETTINGS_TEMPLATE.format(target_calories=target_calories) 
+    return SETTINGS_TEMPLATE.format(target_calories=target_calories)
+
+def create_session(user_id):
+    token = secrets.token_hex(32)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO sessions (id, user_id, session_token) VALUES (%s, %s, %s);",
+                (str(uuid.uuid4()), user_id, token))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return token
+
+def get_user_by_session_token(token):
+    if not token:
+        return None
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT users.id, users.username FROM sessions
+        JOIN users ON sessions.user_id = users.id
+        WHERE session_token = %s;
+    """, (token,))
+    user = cur.fetchone()
+    cur.close()
+    conn.close()
+    return user
+
+@app.get("/logout")
+def logout(session_token: str = Cookie(None)):
+    if session_token:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM sessions WHERE session_token = %s;", (session_token,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    response = RedirectResponse("/")
+    response.delete_cookie("session_token")
+    return response
+  
