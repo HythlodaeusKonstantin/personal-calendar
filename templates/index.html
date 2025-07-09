@@ -207,7 +207,7 @@
 </head>
 <body class="bg-gray-100">
     <!-- Мобильное меню -->
-    <div class="mobile-menu fixed top-0 left-0 right-0 z-50 bg-gray-800 text-white p-4 flex justify-between items-center shadow hidden lg:hidden">
+    <div class="mobile-menu fixed top-0 left-0 right-0 z-50 bg-gray-800 text-white p-4 flex justify-between items-center shadow lg:hidden">
         <h1 class="text-xl font-bold">Календарь</h1>
         <button id="mobile-menu-btn" class="text-white p-2 relative" aria-label="Открыть меню">
             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,10 +218,10 @@
     </div>
 
     <!-- Оверлей для мобильного меню -->
-    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-40 z-40 hidden"></div>
 
     <!-- Мобильная боковая панель -->
-    <aside id="mobile-sidebar" class="mobile-sidebar hidden lg:hidden">
+    <aside id="mobile-sidebar" class="fixed top-0 left-0 h-full w-64 z-50 bg-gray-800 text-white transition-transform duration-300 -translate-x-full">
         <div class="p-4 flex flex-col h-full">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-xl font-bold text-white">Календарь</h1>
@@ -274,7 +274,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Мобильное меню
+            // Мобильное меню drawer
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
             const mobileSidebar = document.getElementById('mobile-sidebar');
@@ -282,14 +282,16 @@
             const menuHint = document.getElementById('menu-hint');
 
             function openMobileMenu() {
-                mobileSidebar.classList.add('active');
-                sidebarOverlay.classList.add('active');
+                mobileSidebar.classList.remove('-translate-x-full');
+                mobileSidebar.classList.add('translate-x-0');
+                sidebarOverlay.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
             }
 
             function closeMobileMenu() {
-                mobileSidebar.classList.remove('active');
-                sidebarOverlay.classList.remove('active');
+                mobileSidebar.classList.add('-translate-x-full');
+                mobileSidebar.classList.remove('translate-x-0');
+                sidebarOverlay.classList.add('hidden');
                 document.body.style.overflow = '';
             }
 
